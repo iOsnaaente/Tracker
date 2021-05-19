@@ -1,0 +1,4 @@
+dearpygui==0.6.294
+serial==3.5
+ephem==3.7.7.1
+numpy==1.20.1
