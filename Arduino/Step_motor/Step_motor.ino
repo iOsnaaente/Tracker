@@ -139,10 +139,10 @@ void loop () {
     dir_gir = deltaAzi > 0 ? true : false ; 
     dir_ele = deltaAlt > 0 ? true : false ;  
 
-    step( dir_gir, num_steps_gir, vel_gir, dir_ele, num_steps_ele, vel_ele);
+    step( dir_gir, num_steps_gir*10, vel_gir, dir_ele, num_steps_ele*10, vel_ele);
         
     printData(); 
-    delay(60000); 
+    delay(10000); 
 }
 
 

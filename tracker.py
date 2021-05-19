@@ -1,17 +1,21 @@
+# Bibliotecas oficiais
 from dearpygui.simple import *
-from dearpygui.core import * 
-
-from utils.serial_reader import serialPorts
-
-from Model import SunPosition
-from Model import Motors
+from dearpygui.core   import * 
 
 import numpy as np 
 
 import datetime
 import serial 
 import ephem
+
 import math
+
+import sys
+
+# Bibliotecas pessoais 
+from utils.serial_reader import serialPorts 
+from utils.Model         import SunPosition
+from utils.Model         import Motors
 
 
 # Definições de exibição 
@@ -44,7 +48,6 @@ tg  = lambda x : math.tan( x )
 
 
 # MACRO 
-PADDING   = 25 
 LATITUDE  = '-29.16530765942215'
 LONGITUDE = '-54.89831672609559'
 ALTITUDE  = 425
@@ -56,7 +59,16 @@ sun_angle_azimute     = 2
 motor_angle_base      = 3
 motor_angle_elevation = 4 
 
+resolucaoM1 = 0 
+passosM1    = 0 
+uPassosM1   = 0 
+
+resolucaoM2 = 0 
+passosM2    = 0 
+uPassosM2   = 0
+
 window_opened = ''
+
 
 #port_list = serialPorts(11)
 port_list = serialPorts(15)
@@ -65,17 +77,15 @@ port_list = serialPorts(15)
 w, h = 350, 225 
 center = [w//2, h//2]
 r = 75 
+ 
 
 sun_data = SunPosition( LATITUDE, LONGITUDE, ALTITUDE )
 sun_data.update_date()
 
 
-
 # Janelas 
 windows = {
-    'Visualização geral'  : ['solar-pos', 'Atuação', 'AtuaçãoBase', 'AtuaçãoElevação', 'log' ], 
-    'Configurações'       : [ ],
-    'Sair'                : [ ],
+    'Visualização geral'  : ['Solar_pos##SP', 'Atuação##SP', 'AtuaçãoBase##SP', 'AtuaçãoElevação##SP', 'log##SP' ],
     'Posição do sol'      : [ "Posição do sol - Visualização","Posição do sol - Altura","Posição do sol - Azimute", "Posição do sol - log" ],
     "Atuadores"           : [ "Controle##AT", 'Definição dos horários##AT', 'Data log das posições##AT', 'Retornos##AT', 'Azimute##AT', 'Altitude##AT' ], 
     "Atuação da base"     : [ ], 
@@ -83,9 +93,13 @@ windows = {
     'Clima'               : [ ],
     'Alerta'              : [ ],
     'GPS'                 : [ ],
-    'Geração'             : [ ],
+    'Geração'             : [ ], 
+    'Configurações'       : [ 'Configurações##CONF' ],
+    'Sair'                : [ 'Sair##Sair' ],
     }
 
+
+window_size = [ 0, 0 ]
 
 # CALLBACKS 
 def mouse_update(sender, data): 
@@ -94,10 +108,33 @@ def mouse_update(sender, data):
 
 def render_update(sender, data):
 
+    global window_size 
+
     sunlight = sun_data.get_sunlight_hours()
     now = datetime.datetime.utcnow() 
 
+    window_size = get_main_window_size() 
+
     if window_opened == 'Visualização geral':
+
+        configure_item('Solar_pos##SP', width = round(window_size[0]*2/3)          , height = round(window_size[1]*5/10)          )
+        configure_item('Solar'        , width = get_item_width('Solar_pos##SP')-20 , height = get_item_height('Solar_pos##SP')-70 )
+        configure_item('progressive'  , width = get_item_width('Solar_pos##SP')    , height = 30                                  ) 
+        
+        clear_drawing('Solar')
+        draw_sun_trajetory('Solar',  get_item_width('Solar_pos##SP')-20,  get_item_height('Solar_pos##SP')-75 )
+
+        configure_item( 'Atuação##SP'        , width = round( window_size[0]*2/3              )    , height = round(window_size[1]*4/10)-20      )
+        configure_item( 'AtuaçãoBase##SP'    , width = round( get_item_width('Atuação##SP')/2 )-10 , height = get_item_height('Atuação##SP')-50  )
+        configure_item( 'AtuaçãoElevação##SP', width = round( get_item_width('Atuação##SP')/2 )-10 , height = get_item_height('Atuação##SP')-50  )
+        
+        configure_item( 'Atuação##SP'        , x_pos = 10                                     , y_pos = round( window_size[1]*5/10)+30    )
+        configure_item( 'AtuaçãoBase##SP'    , x_pos = 15                                     , y_pos = round( window_size[1]*5/10)+75    )
+        configure_item( 'AtuaçãoElevação##SP', x_pos = 20 + get_item_width('AtuaçãoBase##SP') , y_pos = round( window_size[1]*5/10)+75    )
+        
+        configure_item( 'log##SP'            , width = round( window_size[0]/3   ) - 40       , height = round( window_size[1]*9/10) -15  )
+        configure_item( 'log##SP'            , x_pos = round( window_size[0]*2/3 ) + 15       , y_pos  = 25                               )
+        
         # Definição da Latitude/Longitude 
         sun_data.latitude  = str( get_value('Latitude')  )
         sun_data.longitude = str( get_value('Longitude') )
@@ -141,9 +178,9 @@ def render_update(sender, data):
         set_value('Horas de sol', [diff_sunlight//3600, (diff_sunlight//60)%60 , diff_sunlight%60 ] )
 
         # Setar as informações de Nascer do sol, Culminante (ponto mais alto) e Por do sol
-        set_value('Nascer do sol', [ sun_data.rising.hour+sun_data.utc_local, sun_data.rising.minute, sun_data.rising.second ]  )
-        set_value('Culminante',    [ sun_data.transit.hour+sun_data.utc_local, sun_data.transit.minute, sun_data.transit.second ] )
-        set_value('Por do sol',    [ sun_data.sunset.hour+sun_data.utc_local, sun_data.sunset.minute, sun_data.sunset.second ] )    
+        set_value('Nascer do sol', [ sun_data.rising.hour+sun_data.utc_local , sun_data.rising.minute , sun_data.rising.second  ] )
+        set_value('Culminante'   , [ sun_data.transit.hour+sun_data.utc_local, sun_data.transit.minute, sun_data.transit.second ] )
+        set_value('Por do sol'   , [ sun_data.sunset.hour+sun_data.utc_local , sun_data.sunset.minute , sun_data.sunset.second  ] )    
 
     elif window_opened == 'Posição do sol'     : 
         
@@ -175,11 +212,35 @@ def render_update(sender, data):
 
         set_value ( 'UTM local (h)##PS'     , value = sun_data.utc_local )
 
-
-        
-
     elif window_opened == "Atuadores"           :
-        pass
+        
+        configure_item('Controle##AT'  , height = window_size[1] - 75, width  = round( window_size[0]/3 ) - 20 )
+
+
+        configure_item('Controle_child##AT'  , width = get_item_width('Controle##AT')-15 )
+        configure_item('MotorGiro##AT'       , width = get_item_width('Controle##AT')-15 )
+        configure_item('MotorElevação##AT'   , width = get_item_width('Controle##AT')-15 )
+
+        configure_item('PORT##AT'            , width = get_item_width('Controle_child##AT')-15 )
+        configure_item('BAUDRATE##AT'        , width = get_item_width('Controle_child##AT')-15 )
+        configure_item('TIMEOUT##AT'         , width = get_item_width('Controle_child##AT')-15 )
+        configure_item('Iniciar conexão##AT' , width = get_item_width('Controle_child##AT')-15 )
+
+        configure_item('ResoluçãoM1##AT'     , width = get_item_width('MotorGiro##AT')-15 )
+        configure_item('PassosM1##AT'        , width = get_item_width('MotorGiro##AT')-15 )
+        configure_item('MicroPassosM1##AT'   , width = get_item_width('MotorGiro##AT')-15 )
+
+        configure_item('ResoluçãoM2##AT'     , width = get_item_width('MotorElevação##AT')-15 )
+        configure_item('PassosM2##AT'        , width = get_item_width('MotorElevação##AT')-15 )
+        configure_item('MicroPassosM2##AT'   , width = get_item_width('MotorElevação##AT')-15 )
+
+        resolucaoM1 = get_value('ResoluçãoM1##AT')
+        passosM1    = get_value('PassosM1##AT')
+        uPassosM1   = get_value('MicroPassosM1##AT')
+
+        resolucaoM2 = get_value('ResoluçãoM2##AT')
+        passosM2    = get_value('PassosM2##AT')
+        uPassosM2   = get_value('MicroPassosM2##AT')
 
     elif window_opened == "Atuação da base"     :
         pass
@@ -200,6 +261,7 @@ def render_update(sender, data):
         pass
 
 
+
     global sun_angle_azimute, sun_angle_elevation, motor_angle_base, motor_angle_elevation 
 
     sun_angle_azimute   = math.radians(sun_data.azi)
@@ -213,7 +275,7 @@ def render_update(sender, data):
 
     modify_draw_command('MotorElevação', 'Motor', p1 = [(w//2)+r*math.cos( motor_angle_elevation ),  h//2+r*math.sin( motor_angle_elevation )] )
     modify_draw_command('MotorBase',     'Motor', p1 = [(w//2)+r*math.cos( motor_angle_base ),       h//2+r*math.sin( motor_angle_base      )] )
-    
+
 
 def hora_manual(sender, data):
     # Verifica a condição do CheckBox
@@ -240,7 +302,6 @@ def change_menu(sender, data):
     to_open = windows[sender]
     for i in to_open:
         show_item(i)
-
 
 # FUNÇÕES
 def draw_sun_trajetory( name_drawboard, width, height, all_day = False, extremes = False ):
@@ -294,6 +355,19 @@ def draw_semi_circle( name_draw, center, radius, angle_i, angle_f, color, segmen
     points = [ [ center[0] + radius*cos(ang), center[1] - radius*sin(ang) ] for ang in angles ]
     draw_polyline ( name_draw, points = points, color= color, closed = closed, thickness= thickness )
 
+CONNECTED = False
+def initComport(sender, data):
+    port     = get_value('PORT##AT')
+    baudrate = get_value('BAUDRATE##AT')
+    timeout  = get_value('TIMEOUT##AT')
+
+    try:
+        comport = serial.Serial( port= port, baudrate = int(baudrate), timeout= timeout )
+        print("Comport conectada")
+        CONNECTED = True 
+    except: 
+        print("Comport não esta disponível")
+        CONNECTED = False
 
 
 
@@ -315,35 +389,34 @@ with window('main-window', autosize = True ):
 
 
 # JANELAS DA VIEW - VISUALIZAÇÃO GERAL 
-with window('solar-pos', width = 800, height = 375, x_pos = 10, y_pos = 25, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
+with window('Solar_pos##SP', width = 800, height = 375, x_pos = 10, y_pos = 25, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar= True ):
     add_text('Area para a posição do sol')
-    add_drawing('Solar', width=800, height=285)
-    draw_sun_trajetory('Solar', 800, 250)
+    add_drawing('Solar', width = get_item_width('Solar_pos##SP')-20, height = get_item_height('Solar_pos##SP')-50)
+    draw_sun_trajetory('Solar',  get_item_width('Solar_pos##SP')-20,  get_item_height('Solar_pos##SP')-50 )
+    add_progress_bar('progressive', width= get_item_width('Solar_pos##SP'), height=30 )
 
-    add_progress_bar('progressive', width=800, height=30 )
-
-with window('Atuação', width = 800, height = 340, x_pos = 10, y_pos = 410, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
+with window('Atuação##SP', width = 800, height = 340, x_pos = 10, y_pos = 410, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
     add_text('Área para a atução da posição dos paineis solares')
     # Janela de desenho do motor da base
 
-with window('AtuaçãoBase', width = 385, height = 270, x_pos = 10, y_pos = 470, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
+with window('AtuaçãoBase##SP', width = 385, height = 270, x_pos = 10, y_pos = 470, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
     
     # Área de desenho 
-    add_drawing('MotorBase', width = w, height = h)
+    add_drawing('MotorBase', width = w-10, height = h-10)
     draw_circle('MotorBase', center, 75, color['white'](255), thickness=2 )
     draw_arrow('MotorBase', tag='Sun',   p1 = [ 0, 0 ], p2 = center, color = color['green'](155), thickness= 5, size=10)
     draw_arrow('MotorBase', tag='Motor', p1 = [ 0, 0 ], p2 = center, color = color['red'](155),   thickness= 5, size=10)
     draw_circle('MotorBase', center, 5, [255,255,0,175], fill=True )
 
-with window('AtuaçãoElevação', width = 385, height = 270, x_pos = 410, y_pos = 470, no_move= True, no_resize= True, no_collapse=True, no_close= True ):
+with window('AtuaçãoElevação##SP', width = 385, height = 270, x_pos = 410, y_pos = 470, no_move= True, no_resize= True, no_collapse=True, no_close= True ):
     # Área de desenho 
-    add_drawing('MotorElevação', width= w, height=h)
+    add_drawing('MotorElevação', width= w-10, height=h-10)
     draw_circle('MotorElevação', center, r, color['white'](255), thickness=2 )
     draw_arrow('MotorElevação', tag='Sun',   p1 = [ 0, 0 ], p2 = center, color = color['green'](150), thickness= 5, size=10)
     draw_arrow('MotorElevação', tag='Motor', p1 = [ 0, 0 ], p2 = center, color = color['red'](200),   thickness= 5, size=10)
     draw_circle('MotorElevação', center, 5, color['yellow'](155), fill=True)
 
-with window('log', width = 430, height = 725, x_pos = 820, y_pos = 25, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
+with window('log##SP', width = 430, height = 725, x_pos = 820, y_pos = 25, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar = True ):
     #Informações gerais do sistema - Automático 
     add_text('Informações gerais do sistema')
     add_drag_float3('Dia automatico',format='%4.0f', speed=1, no_input= True)
@@ -401,7 +474,7 @@ with window('Posição do sol - Visualização', width = 800, height = 450, x_po
     draw_sun_trajetory('Solar##full', 800, 410, extremes= True )
 
 with window('Posição do sol - Altura', width = 395, height = 270, x_pos = 10, y_pos = 480, no_move = True,  no_resize= True, no_collapse= True, no_close= True ):
-   #w, h = 390, 270
+    # w, h = 390, 270
     raio = 220
 
     add_drawing('Altura##Solar', width = 380, height = 232)
@@ -481,65 +554,59 @@ with window('Posição do sol - log', width= 440, height= 725, x_pos = 815, y_po
     add_spacing(count=5)
 
 
-CONNECTED = False
-def initComport(sender, data):
-    port     = get_value('PORT##AT')
-    baudrate = get_value('BAUDRATE##AT')
-    timeout  = get_value('TIMEOUT##AT')
-
-    try:
-        comport = serial.Serial( port= port, baudrate = int(baudrate), timeout= timeout )
-        print("Comport conectada")
-        CONNECTED = True 
-    except: 
-        print("Comport não esta disponível")
-        CONNECTED = False
-
-
 # JANELAS DE ATUAÇÃO ## AT
-with window('Controle##AT', width= 400, height= 725, x_pos= 10, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True ):    
+with window('Controle##AT', width= 400, height= 725, x_pos= 10, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar= True ):    
 
-    # FAZER UMA THREAD PARA ESCUTAR NOVAS CONEXÕES SERIAIS 
-    add_combo('PORT##AT', default_value='COM', items= port_list )
+    add_spacing(count=2)
+    add_text('CONFIGURAÇÕES DE COMUNICAÇÃO')
 
-    add_spacing( count= 1 )
-    add_combo('BAUDRATE##AT', default_value= '9600', items=[ '9600', '57600', '115200'])
-    add_spacing( count= 1 )
-    add_input_int('TIMEOUT##AT', default_value= 1)
-    add_spacing( count= 5 )
-    add_button('Iniciar conexão##AT', callback= initComport, width=260 )
+    # AJUSTA O CHILD DE ACORDO COM A WINDOW "Controle##AT" 
+    with child('Controle_child##AT', width= get_item_width('Controle##AT')-15, height= 200 ):
 
-    add_spacing(count= 15)
-    add_text('Definições dos motores de passo')
+        # FAZER UMA THREAD PARA ESCUTAR NOVAS CONEXÕES SERIAIS 
+        add_text('Selecione a porta serial: ')
+        add_combo('PORT##AT', default_value='COM', items= port_list)
+        add_spacing( count= 1 )
+
+        add_text('Baudarate: ')
+        add_combo('BAUDRATE##AT', default_value= '9600', items=[ '9600', '57600', '115200'], label='' )
+        add_spacing( count= 1 )
+
+        add_text('Timeout: ')
+        add_input_int('TIMEOUT##AT', default_value= 1, label= '')
+        add_spacing( count= 5 )
+
+        add_button('Iniciar conexão##AT', callback= initComport )
     add_spacing(count= 5)
 
-    add_text("Motor de Rotação da base - Motor 1")
-    add_spacing(count=2)
-    add_text('Resolução:')
-    add_input_float('ResoluçãoM1##AT', default_value= 1.8, min_value= 0.01, max_value= 180, format= '%3.2f', callback= lambda sender, data : set_value('PassosM1##AT', value = ( 360 / get_value('ResoluçãoM1##AT') ) ), label='' )
-    add_text('Passos por volta')
-    add_drag_float('PassosM1##AT', default_value=  360 / 1.8, format='%5.2f', no_input= True, label='' )
-    add_spacing(count= 2)
-    #add_text('Passos da correia (mm)')
-    #add_input_float('CorreiaM1##AT',label='', default_value= 2 )
-    #add_spacing(count= 2)
-    add_text('Micro Passos do motor')
-    add_combo('MicroPassosM1##AT', label='', default_value = '1/16', items= ['1', '1/2', '1/4', '1/8', '1/16', '1/32'] )
-    add_spacing(count=10)
+    # DEFNIÇÃO DOS MOTORES INDIVUDUAIS 
+    add_text('DEFINIÇÃO DOS MOTORES DE PASSO')
 
-    add_text("Motor de Rotação da base - Motor 2")
-    add_spacing(count=2)
-    add_text('Resolução:')
-    add_input_float('ResoluçãoM2##AT', default_value= 1.8, min_value= 0.01, max_value= 180, format= '%3.2f', callback= lambda sender, data : set_value('PassosM2##AT', value = ( 360 / get_value('ResoluçãoM2##AT') ) ), label='' )
-    add_text('Passos por volta')
-    add_drag_float('PassosM2##AT', default_value=  360 / 1.8, format='%5.2f', no_input= True, label='' )
-    add_spacing(count= 2)
-    #add_text('Passos da correia (mm)')
-    #add_input_float('CorreiaM2##AT',label='', default_value= 2 )
-    #add_spacing(count= 2)
-    add_text('Micro Passos do motor')
-    add_combo('MicroPassosM2##AT', label='', default_value = '1/16', items= ['1', '1/2', '1/4', '1/8', '1/16', '1/32'] )
+    with child('MotorGiro##AT', width= get_item_width('Controle##AT')-15, height= 200):
+        add_text("Motor de Rotação da base - Motor 1")
+        add_spacing(count=2)
+        add_text('Resolução:')
+        add_input_float('ResoluçãoM1##AT', default_value= 1.8, format= '%3.2f', callback= lambda sender, data : set_value('PassosM1##AT', value= (360/get_value('ResoluçãoM1##AT') if get_value('ResoluçãoM1##AT') > 0 else 0 ) ), label = '' )
+        add_spacing(count=2)
 
+        add_text('Passos por volta:')
+        add_drag_float('PassosM1##AT', default_value=  360 / 1.8, format='%5.2f', no_input= True, label='' )
+        add_spacing(count= 2)
+        add_text('Micro Passos do motor:')
+        add_combo('MicroPassosM1##AT', default_value = '1/16', items= ['1', '1/2', '1/4', '1/8', '1/16', '1/32'], label='' )
+    add_spacing(count= 2)
+
+    with child('MotorElevação##AT',  width= get_item_width('Controle##AT')-15, height= 200 ):
+        add_text("Motor de Rotação da base - Motor 2")
+        add_spacing(count=2)
+        add_text('Resolução:')
+        add_input_float('ResoluçãoM2##AT', default_value= 1.8, format= '%3.2f', callback= lambda sender, data : set_value('PassosM2##AT', value= (360/get_value('ResoluçãoM2##AT') if get_value('ResoluçãoM2##AT') > 0 else 0 ) ), label = '' )
+        add_spacing(count=2)
+        add_text('Passos por volta:')
+        add_drag_float('PassosM2##AT', default_value=  360 / 1.8, format='%5.2f', no_input= True, label='' )
+        add_spacing(count= 2)
+        add_text('Micro Passos do motor:')
+        add_combo('MicroPassosM2##AT', label='', default_value = '1/16', items= ['1', '1/2', '1/4', '1/8', '1/16', '1/32'] )
 
 with window('Definição dos horários##AT', width= 835, height= 300, x_pos= 420, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True):
     pass
@@ -556,13 +623,37 @@ with window('Azimute##AT', width= 835, height= 300, x_pos= 420, y_pos= 25, no_mo
 with window('Altitude##AT', width= 835, height= 300, x_pos= 420, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True):
     pass
 
+with window('Configurações##CONF', x_pos= 0, y_pos= 20, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar= True):
+    window_size = get_main_window_size() 
+    window_size = [ window_size[0], window_size[1]-20 ]
+
+    configure_item('Configurações##CONF', width = window_size[0], height = window_size[1] )
+
+
+# VIEW PARA SAIR DO SUPERVISÓRIO
+with window('Sair##Sair', x_pos= 0, y_pos= 20, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar= True):
+    window_size = get_main_window_size() 
+    window_size = [ window_size[0], window_size[1]-20 ]
+
+    configure_item('Sair##Sair', width = window_size[0], height = window_size[1] ) 
+
+    add_group("MeioTela##Sair", horizontal= True )
+    add_spacing(count= 30 )
+    with child('##Sair'          , width= round(window_size[0]/3), border = False ): pass 
+    with child('Sair_child##Sair', width= 175, height = 100    ):
+        add_text('     Deseja sair ?',)
+        add_spacing(count= 10)
+        add_group('group_sair##Sair', horizontal= True )
+        add_button('Sim##Sair', width= 75, callback= lambda sender, data : sys.exit(0) )
+        add_button('Não##Sair', width= 75, callback= lambda sender, data : change_menu('Visualização geral', None) )
+
+
 
 # Chamada de callbacks de rotina 
 set_mouse_drag_callback(mouse_update, 10)
 set_render_callback( render_update )
-change_menu('Visualização geral', None )
-change_menu('Posição do sol', None )
-change_menu('Atuadores', None )
+
+change_menu('Configurações', None )
 
 
 # Inicia o dearpygui com a janela principal 
