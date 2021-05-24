@@ -9,7 +9,6 @@ import serial
 import ephem
 
 import math
-
 import sys
 
 # Bibliotecas pessoais 
@@ -88,16 +87,14 @@ windows = {
     'Visualização geral'  : ['Solar_pos##SP', 'Atuação##SP', 'AtuaçãoBase##SP', 'AtuaçãoElevação##SP', 'log##SP' ],
     'Posição do sol'      : [ "Posição do sol - Visualização","Posição do sol - Altura","Posição do sol - Azimute", "Posição do sol - log" ],
     "Atuadores"           : [ "Controle##AT", 'Definição dos horários##AT', 'Data log das posições##AT', 'Retornos##AT', 'Azimute##AT', 'Altitude##AT' ], 
-    "Atuação da base"     : [ ], 
-    "Atuação da elevação" : [ ],
+    "Atuação da base"     : [ 'Visualização##MG', 'Infos_inferiores##MG', 'log##MG' ], 
+    "Atuação da elevação" : [ 'Visualização##ME', 'Infos_inferiores##ME', 'log##ME' ],
     'Clima'               : [ ],
     'Alerta'              : [ ],
     'GPS'                 : [ ],
     'Geração'             : [ ], 
     'Configurações'       : [ 'Configurações##CONF' ],
-    'Sair'                : [ 'Sair##Sair' ],
     }
-
 
 window_size = [ 0, 0 ]
 
@@ -107,15 +104,28 @@ def mouse_update(sender, data):
     print(pos)
 
 def render_update(sender, data):
-
+    global sun_angle_azimute, sun_angle_elevation, motor_angle_base, motor_angle_elevation 
     global window_size 
 
     sunlight = sun_data.get_sunlight_hours()
-    now = datetime.datetime.utcnow() 
+    now      = datetime.datetime.utcnow() 
+
+    sun_angle_azimute   = math.radians(sun_data.azi)
+    sun_angle_elevation = math.radians(sun_data.alt) 
+
+    motor_angle_base      = motor_angle_base + (sun_angle_azimute - motor_angle_base) * get_delta_time() if abs(sun_angle_azimute - motor_angle_base) > 0.005 else motor_angle_base
+    motor_angle_elevation = motor_angle_elevation + ( sun_angle_elevation - motor_angle_elevation) * get_delta_time() if abs(sun_angle_elevation - motor_angle_elevation) > 0.005 else motor_angle_elevation
+    
+    modify_draw_command('MotorElevação', 'Sun'  , p1 = [ (w//2)+r*math.cos( sun_angle_elevation ), h//2+r*math.sin( sun_angle_elevation )] )
+    modify_draw_command('MotorBase',     'Sun'  , p1 = [ (w//2)+r*math.cos( sun_angle_azimute )  , h//2+r*math.sin( sun_angle_azimute )  ] )
+ 
+    modify_draw_command('MotorElevação', 'Motor', p1 = [ (w//2)+r*math.cos( motor_angle_elevation ),  h//2+r*math.sin( motor_angle_elevation ) ] )
+    modify_draw_command('MotorBase',     'Motor', p1 = [ (w//2)+r*math.cos( motor_angle_base )     ,  h//2+r*math.sin( motor_angle_base      ) ] )
+
 
     window_size = get_main_window_size() 
 
-    if window_opened == 'Visualização geral':
+    if   window_opened == 'Visualização geral'    :
 
         configure_item('Solar_pos##SP', width = round(window_size[0]*2/3)          , height = round(window_size[1]*5/10)          )
         configure_item('Solar'        , width = get_item_width('Solar_pos##SP')-20 , height = get_item_height('Solar_pos##SP')-70 )
@@ -182,7 +192,7 @@ def render_update(sender, data):
         set_value('Culminante'   , [ sun_data.transit.hour+sun_data.utc_local, sun_data.transit.minute, sun_data.transit.second ] )
         set_value('Por do sol'   , [ sun_data.sunset.hour+sun_data.utc_local , sun_data.sunset.minute , sun_data.sunset.second  ] )    
 
-    elif window_opened == 'Posição do sol'     : 
+    elif window_opened == 'Posição do sol'      : 
         
         # Definição da Latitude/Longitude 
         sun_data.latitude  = str( get_value('Latitude (º)##PS' ) )
@@ -243,38 +253,17 @@ def render_update(sender, data):
         uPassosM2   = get_value('MicroPassosM2##AT')
 
     elif window_opened == "Atuação da base"     :
-        pass
-
-    elif window_opened == "Atuação da elevação" :
-        pass
-
-    elif window_opened == 'Clima'               :
-        pass
-
-    elif window_opened == 'Alerta'              :
-        pass
-
-    elif window_opened == 'GPS'                 :
-        pass
-
-    elif window_opened == 'Geração'             :
-        pass
-
-
-
-    global sun_angle_azimute, sun_angle_elevation, motor_angle_base, motor_angle_elevation 
-
-    sun_angle_azimute   = math.radians(sun_data.azi)
-    sun_angle_elevation = math.radians(sun_data.alt) 
-
-    motor_angle_base = motor_angle_base + (sun_angle_azimute - motor_angle_base) * get_delta_time() if abs(sun_angle_azimute - motor_angle_base) > 0.005 else motor_angle_base
-    motor_angle_elevation = motor_angle_elevation + ( sun_angle_elevation - motor_angle_elevation) * get_delta_time() if abs(sun_angle_elevation - motor_angle_elevation) > 0.005 else motor_angle_elevation
+        configure_item('Infos_inferiores##MG', width = round(window_size[0]*3/5)-10, height = round( window_size[1]/4)-50   , x_pos = 10                          , y_pos = round( window_size[1]*3/4)+5   )
+        configure_item('log##MG'             , width = round(window_size[0]*2/5)-25, height = round( window_size[1])-70     , x_pos = round(window_size[0]*3/5)+5 , y_pos = 25   )
+        configure_item('Visualização##MG'    , width = round(window_size[0]*3/5)-10, height = round( window_size[1]*3/4)-25 , x_pos = 10                          , y_pos = 25   )
     
-    modify_draw_command('MotorElevação', 'Sun', p1 = [(w//2)+r*math.cos( sun_angle_elevation ), h//2+r*math.sin( sun_angle_elevation )] )
-    modify_draw_command('MotorBase',     'Sun', p1 = [(w//2)+r*math.cos( sun_angle_azimute ), h//2+r*math.sin( sun_angle_azimute )] )
-
-    modify_draw_command('MotorElevação', 'Motor', p1 = [(w//2)+r*math.cos( motor_angle_elevation ),  h//2+r*math.sin( motor_angle_elevation )] )
-    modify_draw_command('MotorBase',     'Motor', p1 = [(w//2)+r*math.cos( motor_angle_base ),       h//2+r*math.sin( motor_angle_base      )] )
+    elif window_opened == "Atuação da elevação" :
+        configure_item('Infos_inferiores##ME', width = round(window_size[0]*3/5)-10, height = round( window_size[1]/4)-50   , x_pos = 10                          , y_pos = round( window_size[1]*3/4)+5   )
+        configure_item('log##ME'             , width = round(window_size[0]*2/5)-25, height = round( window_size[1])-70     , x_pos = round(window_size[0]*3/5)+5 , y_pos = 25   )
+        configure_item('Visualização##ME'    , width = round(window_size[0]*3/5)-10, height = round( window_size[1]*3/4)-25 , x_pos = 10                          , y_pos = 25   )
+    
+    elif window_opened == 'Configurações'       : 
+        configure_item('Configurações##CONF', width = window_size[0]-25, height = window_size[1]-70, x_pos = 5, y_pos = 25 )
 
 
 def hora_manual(sender, data):
@@ -355,12 +344,15 @@ def draw_semi_circle( name_draw, center, radius, angle_i, angle_f, color, segmen
     points = [ [ center[0] + radius*cos(ang), center[1] - radius*sin(ang) ] for ang in angles ]
     draw_polyline ( name_draw, points = points, color= color, closed = closed, thickness= thickness )
 
+
+## DESCOMENTAR A CONEXÃO SERIAL
 CONNECTED = False
 def initComport(sender, data):
     port     = get_value('PORT##AT')
     baudrate = get_value('BAUDRATE##AT')
     timeout  = get_value('TIMEOUT##AT')
 
+    '''
     try:
         comport = serial.Serial( port= port, baudrate = int(baudrate), timeout= timeout )
         print("Comport conectada")
@@ -368,7 +360,7 @@ def initComport(sender, data):
     except: 
         print("Comport não esta disponível")
         CONNECTED = False
-
+    '''
 
 
 # MAIN WINDOW WITH MENU BAR 
@@ -376,30 +368,30 @@ with window('main-window', autosize = True ):
     with menu_bar("MenuBar"):
         add_menu_item("Visualização geral", callback = change_menu )
         add_menu_item("Posição do sol", callback = change_menu)
-        with menu("Atuação##"):
-            add_menu_item("Atuadores"          , callback = change_menu)
-            add_menu_item("Atuação da base"    , callback = change_menu)
-            add_menu_item("Atuação da elevação", callback = change_menu)
-        add_menu_item('Clima'        , callback = change_menu )
-        add_menu_item('Alerta'       , callback = change_menu )
-        add_menu_item('GPS'          , callback = change_menu )
-        add_menu_item('Geração'      , callback = change_menu )
+        #with menu("Atuação##"):
+        add_menu_item("Atuadores"          , callback = change_menu)
+        add_menu_item("Atuação da base"    , callback = change_menu)
+        add_menu_item("Atuação da elevação", callback = change_menu)
+        #add_menu_item('Clima'        , callback = change_menu )
+        #add_menu_item('Alerta'       , callback = change_menu )
+        #add_menu_item('GPS'          , callback = change_menu )
+        #add_menu_item('Geração'      , callback = change_menu )
         add_menu_item("Configurações", callback = change_menu)
-        add_menu_item('Sair'         , callback = change_menu)
+        add_menu_item('Sair'         , callback = lambda sender, data : configure_item('Sair##Sair', show=True))
 
 
 # JANELAS DA VIEW - VISUALIZAÇÃO GERAL 
-with window('Solar_pos##SP', width = 800, height = 375, x_pos = 10, y_pos = 25, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar= True ):
+with window('Solar_pos##SP'      , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ):
     add_text('Area para a posição do sol')
     add_drawing('Solar', width = get_item_width('Solar_pos##SP')-20, height = get_item_height('Solar_pos##SP')-50)
     draw_sun_trajetory('Solar',  get_item_width('Solar_pos##SP')-20,  get_item_height('Solar_pos##SP')-50 )
     add_progress_bar('progressive', width= get_item_width('Solar_pos##SP'), height=30 )
-
-with window('Atuação##SP', width = 800, height = 340, x_pos = 10, y_pos = 410, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
+    
+with window('Atuação##SP'        , no_move = True, no_resize = True, no_collapse = True, no_close = True ):
     add_text('Área para a atução da posição dos paineis solares')
     # Janela de desenho do motor da base
-
-with window('AtuaçãoBase##SP', width = 385, height = 270, x_pos = 10, y_pos = 470, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
+    
+with window('AtuaçãoBase##SP'    , no_move = True, no_resize = True, no_collapse = True, no_close = True ):
     
     # Área de desenho 
     add_drawing('MotorBase', width = w-10, height = h-10)
@@ -407,16 +399,16 @@ with window('AtuaçãoBase##SP', width = 385, height = 270, x_pos = 10, y_pos = 
     draw_arrow('MotorBase', tag='Sun',   p1 = [ 0, 0 ], p2 = center, color = color['green'](155), thickness= 5, size=10)
     draw_arrow('MotorBase', tag='Motor', p1 = [ 0, 0 ], p2 = center, color = color['red'](155),   thickness= 5, size=10)
     draw_circle('MotorBase', center, 5, [255,255,0,175], fill=True )
-
-with window('AtuaçãoElevação##SP', width = 385, height = 270, x_pos = 410, y_pos = 470, no_move= True, no_resize= True, no_collapse=True, no_close= True ):
+    
+with window('AtuaçãoElevação##SP', no_move = True, no_resize = True, no_collapse = True, no_close = True ):
     # Área de desenho 
     add_drawing('MotorElevação', width= w-10, height=h-10)
     draw_circle('MotorElevação', center, r, color['white'](255), thickness=2 )
     draw_arrow('MotorElevação', tag='Sun',   p1 = [ 0, 0 ], p2 = center, color = color['green'](150), thickness= 5, size=10)
     draw_arrow('MotorElevação', tag='Motor', p1 = [ 0, 0 ], p2 = center, color = color['red'](200),   thickness= 5, size=10)
     draw_circle('MotorElevação', center, 5, color['yellow'](155), fill=True)
-
-with window('log##SP', width = 430, height = 725, x_pos = 820, y_pos = 25, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar = True ):
+    
+with window('log##SP'            , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar = True ):
     #Informações gerais do sistema - Automático 
     add_text('Informações gerais do sistema')
     add_drag_float3('Dia automatico',format='%4.0f', speed=1, no_input= True)
@@ -473,7 +465,7 @@ with window('Posição do sol - Visualização', width = 800, height = 450, x_po
     add_drawing('Solar##full', width = 800, height = 410 )
     draw_sun_trajetory('Solar##full', 800, 410, extremes= True )
 
-with window('Posição do sol - Altura', width = 395, height = 270, x_pos = 10, y_pos = 480, no_move = True,  no_resize= True, no_collapse= True, no_close= True ):
+with window('Posição do sol - Altura'      , width = 395, height = 270, x_pos = 10, y_pos = 480, no_move = True,  no_resize= True, no_collapse= True, no_close= True ):
     # w, h = 390, 270
     raio = 220
 
@@ -490,7 +482,7 @@ with window('Posição do sol - Altura', width = 395, height = 270, x_pos = 10, 
     draw_text('Altura##Solar', [380-75, 10], "Altura:", color= color['white'](255), size=15 )
     draw_text('Altura##Solar', [380-75, 25], str( round(math.degrees(ang)) ) + 'º', color= color['white'](255), size=15 )
     
-with window('Posição do sol - Azimute', width = 395, height = 270, x_pos = 415, y_pos = 480, no_move = True,  no_resize= True, no_collapse= True, no_close= True ):
+with window('Posição do sol - Azimute'     , width = 395, height = 270, x_pos = 415, y_pos = 480, no_move = True,  no_resize= True, no_collapse= True, no_close= True ):
     add_drawing('Azimute##Solar', width = 380, height = 230)
     draw_circle('Azimute##Solar', center = [ 380//2, 230//2], radius= 100, color= color['white'](200), thickness= 2 )
     draw_line('Azimute##Solar', p1= [380//2 -100, 230//2], p2=  [380//2 +100, 230//2], color = color['gray'](200), thickness=2 )
@@ -511,7 +503,7 @@ with window('Posição do sol - Azimute', width = 395, height = 270, x_pos = 415
     # FIM DA RENDERIZAÇÃO
     draw_circle('Azimute##Solar', center= [380//2, 230//2], radius= 3, color= color['white'](200), thickness=2, fill= color['black'](255))
 
-with window('Posição do sol - log', width= 440, height= 725, x_pos = 815, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
+with window('Posição do sol - log'         , width = 440, height = 725, x_pos = 815, y_pos = 25, no_move= True, no_resize= True, no_collapse= True, no_close= True ):
     
     #Informações gerais do sistema - Automático 
     add_text('Informações de data e calculo')
@@ -555,7 +547,7 @@ with window('Posição do sol - log', width= 440, height= 725, x_pos = 815, y_po
 
 
 # JANELAS DE ATUAÇÃO ## AT
-with window('Controle##AT', width= 400, height= 725, x_pos= 10, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar= True ):    
+with window('Controle##AT'    , width= 400, height= 725, x_pos= 10, y_pos= 25  , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ):    
 
     add_spacing(count=2)
     add_text('CONFIGURAÇÕES DE COMUNICAÇÃO')
@@ -607,54 +599,58 @@ with window('Controle##AT', width= 400, height= 725, x_pos= 10, y_pos= 25, no_mo
         add_spacing(count= 2)
         add_text('Micro Passos do motor:')
         add_combo('MicroPassosM2##AT', label='', default_value = '1/16', items= ['1', '1/2', '1/4', '1/8', '1/16', '1/32'] )
-
-with window('Definição dos horários##AT', width= 835, height= 300, x_pos= 420, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True):
+     
+with window('Retorno M1##AT'  , width= 835, height= 300, x_pos= 420, y_pos= 25 , no_move = True, no_resize = True, no_collapse = True, no_close = True):
     pass
 
-with window('Data log das posições##AT', width= 400, height= 300, x_pos= 420, y_pos= 335, no_move= True, no_resize= True, no_collapse= True, no_close= True):
+with window('Retorno M2##AT'  , width= 835, height= 300, x_pos= 420, y_pos= 25 , no_move = True, no_resize = True, no_collapse = True, no_close = True):
+    pass
+    
+with window('Visualização##AT', width= 835, height= 300, x_pos= 420, y_pos= 25 , no_move = True, no_resize = True, no_collapse = True, no_close = True):
     pass
 
-with window('Retornos##AT', width= 835, height= 300, x_pos= 420, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True):
+
+# JANELA DE ATUAÇÃO DO MOTOR DE GIRO 
+with window('Visualização##MG'    , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar = True):
     pass
 
-with window('Azimute##AT', width= 835, height= 300, x_pos= 420, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True):
+with window('Infos_inferiores##MG', no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar = True):
     pass
 
-with window('Altitude##AT', width= 835, height= 300, x_pos= 420, y_pos= 25, no_move= True, no_resize= True, no_collapse= True, no_close= True):
+with window('log##MG'             , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar = True):
     pass
 
-with window('Configurações##CONF', x_pos= 0, y_pos= 20, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar= True):
-    window_size = get_main_window_size() 
-    window_size = [ window_size[0], window_size[1]-20 ]
 
-    configure_item('Configurações##CONF', width = window_size[0], height = window_size[1] )
+# JANELA DE ATUAÇÃO DO MOTOR DE ELEVAÇÃO 
+with window('Visualização##ME'    , no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar = True):
+    configure_item('Visualização##ME', width = round(window_size[0]*3/5), height = round( window_size[1]*3/4), x_pos = 10, y_pos = 25   )
+    
+with window('Infos_inferiores##ME', no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar = True):
+    pass
 
+with window('log##ME'             , no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar = True):
+    pass
+
+
+
+# VIEW DAS CONFIGURAÇÕES 
+with window('Configurações##CONF' , no_resize = True, no_collapse = True, no_close = True, no_title_bar = True ):
+    pass
 
 # VIEW PARA SAIR DO SUPERVISÓRIO
-with window('Sair##Sair', x_pos= 0, y_pos= 20, no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar= True):
-    window_size = get_main_window_size() 
-    window_size = [ window_size[0], window_size[1]-20 ]
-
-    configure_item('Sair##Sair', width = window_size[0], height = window_size[1] ) 
-
-    add_group("MeioTela##Sair", horizontal= True )
-    add_spacing(count= 30 )
-    with child('##Sair'          , width= round(window_size[0]/3), border = False ): pass 
-    with child('Sair_child##Sair', width= 175, height = 100    ):
-        add_text('     Deseja sair ?',)
-        add_spacing(count= 10)
-        add_group('group_sair##Sair', horizontal= True )
-        add_button('Sim##Sair', width= 75, callback= lambda sender, data : sys.exit(0) )
-        add_button('Não##Sair', width= 75, callback= lambda sender, data : change_menu('Visualização geral', None) )
-
+with window('Sair##Sair', width= 175, height= 150, x_pos= (get_main_window_size()[0]//2)-100 , y_pos= (get_main_window_size()[1]//2)-100, no_resize = True, no_title_bar= True, show= False):
+    add_text('     Deseja sair ?',)
+    add_spacing(count= 10)
+    add_group('group_sair##Sair', horizontal= True )
+    add_button('Sim##Sair', width= 75, callback= lambda sender, data : sys.exit(0) )
+    add_button('Não##Sair', width= 75, callback= lambda sender, data : configure_item('Sair##Sair', show = False) )
 
 
 # Chamada de callbacks de rotina 
 set_mouse_drag_callback(mouse_update, 10)
 set_render_callback( render_update )
 
-change_menu('Configurações', None )
-
+change_menu('Atuação da base', None )
 
 # Inicia o dearpygui com a janela principal 
 start_dearpygui( primary_window = 'main-window' )
