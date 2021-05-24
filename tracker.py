@@ -2,6 +2,8 @@
 from dearpygui.simple import *
 from dearpygui.core   import * 
 
+from threading import Thread, Lock 
+
 import numpy as np 
 
 import datetime
@@ -12,11 +14,11 @@ import math
 import sys
 
 # Bibliotecas pessoais 
-from utils.serial_reader import serialPorts 
-from utils.Model         import SunPosition
-from utils.Model         import Motors
-
-
+from utils.Async_function_BB import Async_function
+from utils.serial_reader     import serialPorts 
+from utils.Model             import SunPosition
+from utils.Model             import Motors
+    
 # Definições de exibição 
 X, Y = get_main_window_size()
 set_main_window_pos( 100,0 )
@@ -69,8 +71,10 @@ uPassosM2   = 0
 window_opened = ''
 
 
-#port_list = serialPorts(11)
-port_list = serialPorts(15)
+# DESCOMENTAR PARA FUNCIONAR AS COMPORTS 
+#port_list = serialPorts(15)
+port_list = [] 
+
 
 # Configurações padrão 
 w, h = 350, 225 
@@ -81,14 +85,13 @@ r = 75
 sun_data = SunPosition( LATITUDE, LONGITUDE, ALTITUDE )
 sun_data.update_date()
 
-
 # Janelas 
 windows = {
-    'Visualização geral'  : ['Solar_pos##SP', 'Atuação##SP', 'AtuaçãoBase##SP', 'AtuaçãoElevação##SP', 'log##SP' ],
-    'Posição do sol'      : [ "Posição do sol - Visualização","Posição do sol - Altura","Posição do sol - Azimute", "Posição do sol - log" ],
-    "Atuadores"           : [ "Controle##AT", 'Definição dos horários##AT', 'Data log das posições##AT', 'Retornos##AT', 'Azimute##AT', 'Altitude##AT' ], 
+    'Visualização geral'  : ['Solar_pos##SP'    , 'Atuação##SP', 'AtuaçãoBase##SP', 'AtuaçãoElevação##SP', 'log##SP' ],
+    'Posição do sol'      : [ "Posição do sol - Visualização", "Posição do sol - Altura", "Posição do sol - Azimute", "Posição do sol - log" ],
+    "Atuadores"           : [ "Controle##AT"    , 'Visualização##AT', 'Retorno##AT','Retorno M2##AT' ], 
     "Atuação da base"     : [ 'Visualização##MG', 'Infos_inferiores##MG', 'log##MG' ], 
-    "Atuação da elevação" : [ 'Visualização##ME', 'Infos_inferiores##ME', 'log##ME' ],
+    "Atuação da elevação" : [ 'Visualização##ME', 'Infos_inferiores##ME' , 'log##ME' ],
     'Clima'               : [ ],
     'Alerta'              : [ ],
     'GPS'                 : [ ],
@@ -96,12 +99,14 @@ windows = {
     'Configurações'       : [ 'Configurações##CONF' ],
     }
 
+
+
 window_size = [ 0, 0 ]
 
 # CALLBACKS 
 def mouse_update(sender, data): 
     pos = get_mouse_pos( local = True )
-    print(pos)
+    print( get_active_window() )
 
 def render_update(sender, data):
     global sun_angle_azimute, sun_angle_elevation, motor_angle_base, motor_angle_elevation 
@@ -128,15 +133,17 @@ def render_update(sender, data):
     if   window_opened == 'Visualização geral'    :
 
         configure_item('Solar_pos##SP', width = round(window_size[0]*2/3)          , height = round(window_size[1]*5/10)          )
+        configure_item('Solar_pos##SP', x_pos = 10, y_pos = 25 )
+        
         configure_item('Solar'        , width = get_item_width('Solar_pos##SP')-20 , height = get_item_height('Solar_pos##SP')-70 )
         configure_item('progressive'  , width = get_item_width('Solar_pos##SP')    , height = 30                                  ) 
         
         clear_drawing('Solar')
         draw_sun_trajetory('Solar',  get_item_width('Solar_pos##SP')-20,  get_item_height('Solar_pos##SP')-75 )
 
-        configure_item( 'Atuação##SP'        , width = round( window_size[0]*2/3              )    , height = round(window_size[1]*4/10)-20      )
-        configure_item( 'AtuaçãoBase##SP'    , width = round( get_item_width('Atuação##SP')/2 )-10 , height = get_item_height('Atuação##SP')-50  )
-        configure_item( 'AtuaçãoElevação##SP', width = round( get_item_width('Atuação##SP')/2 )-10 , height = get_item_height('Atuação##SP')-50  )
+        configure_item( 'Atuação##SP'        , width = (window_size[0]//3)*2               , height = round(window_size[1]*4/10)-20      )
+        configure_item( 'AtuaçãoBase##SP'    , width = get_item_width('Atuação##SP')//2-10 , height = get_item_height('Atuação##SP')-50  )
+        configure_item( 'AtuaçãoElevação##SP', width = get_item_width('Atuação##SP')//2-10 , height = get_item_height('Atuação##SP')-50  )
         
         configure_item( 'Atuação##SP'        , x_pos = 10                                     , y_pos = round( window_size[1]*5/10)+30    )
         configure_item( 'AtuaçãoBase##SP'    , x_pos = 15                                     , y_pos = round( window_size[1]*5/10)+75    )
@@ -223,47 +230,73 @@ def render_update(sender, data):
         set_value ( 'UTM local (h)##PS'     , value = sun_data.utc_local )
 
     elif window_opened == "Atuadores"           :
-        
-        configure_item('Controle##AT'  , height = window_size[1] - 75, width  = round( window_size[0]/3 ) - 20 )
 
+        configure_item('Controle##AT'       , width = round( window_size[0]/3 ) - 20                                     , height = window_size[1] - 75               )
+        configure_item('Controle##AT'       , x_pos = 10                                                                 , y_pos = 25                                 )
+        configure_item('Retorno##AT'        , width = (window_size[0]//3)-10                                             , height = (window_size[1]//2)               )
+        configure_item('Retorno##AT'        , x_pos = get_item_width('Controle##AT')+15                                  , y_pos = 25                                 )
+        configure_item('Retorno M2##AT'     , width = (window_size[0]//3)-10                                             , height = (window_size[1]//2)               )
+        configure_item('Retorno M2##AT'     , x_pos = get_item_width('Controle##AT')+get_item_width('Retorno M2##AT')+20 , y_pos = 25                                 )
+        configure_item('Visualização##AT'   , width = (window_size[0]//3)*2 -15                                          , height = (window_size[1]//2)-85            )
+        configure_item('Visualização##AT'   , x_pos = get_item_width('Controle##AT')+15                                  , y_pos = get_item_height('Retorno##AT')+35  )
 
-        configure_item('Controle_child##AT'  , width = get_item_width('Controle##AT')-15 )
-        configure_item('MotorGiro##AT'       , width = get_item_width('Controle##AT')-15 )
-        configure_item('MotorElevação##AT'   , width = get_item_width('Controle##AT')-15 )
+        configure_item('Controle_child##AT'  , width = get_item_width('Controle##AT')-15       )
+        configure_item('MotorGiro##AT'       , width = get_item_width('Controle##AT')-15       )
+        configure_item('MotorElevação##AT'   , width = get_item_width('Controle##AT')-15       )
 
         configure_item('PORT##AT'            , width = get_item_width('Controle_child##AT')-15 )
         configure_item('BAUDRATE##AT'        , width = get_item_width('Controle_child##AT')-15 )
         configure_item('TIMEOUT##AT'         , width = get_item_width('Controle_child##AT')-15 )
         configure_item('Iniciar conexão##AT' , width = get_item_width('Controle_child##AT')-15 )
 
-        configure_item('ResoluçãoM1##AT'     , width = get_item_width('MotorGiro##AT')-15 )
-        configure_item('PassosM1##AT'        , width = get_item_width('MotorGiro##AT')-15 )
-        configure_item('MicroPassosM1##AT'   , width = get_item_width('MotorGiro##AT')-15 )
+        configure_item('ResoluçãoM1##AT'     , width = get_item_width('MotorGiro##AT')-15      )
+        configure_item('PassosM1##AT'        , width = get_item_width('MotorGiro##AT')-15      )
+        configure_item('MicroPassosM1##AT'   , width = get_item_width('MotorGiro##AT')-15      )
 
         configure_item('ResoluçãoM2##AT'     , width = get_item_width('MotorElevação##AT')-15 )
         configure_item('PassosM2##AT'        , width = get_item_width('MotorElevação##AT')-15 )
         configure_item('MicroPassosM2##AT'   , width = get_item_width('MotorElevação##AT')-15 )
 
-        resolucaoM1 = get_value('ResoluçãoM1##AT')
-        passosM1    = get_value('PassosM1##AT')
+        resolucaoM1 = get_value('ResoluçãoM1##AT'  )
+        passosM1    = get_value('PassosM1##AT'     )
         uPassosM1   = get_value('MicroPassosM1##AT')
 
-        resolucaoM2 = get_value('ResoluçãoM2##AT')
-        passosM2    = get_value('PassosM2##AT')
+        resolucaoM2 = get_value('ResoluçãoM2##AT'  )
+        passosM2    = get_value('PassosM2##AT'     )
         uPassosM2   = get_value('MicroPassosM2##AT')
+
 
     elif window_opened == "Atuação da base"     :
         configure_item('Infos_inferiores##MG', width = round(window_size[0]*3/5)-10, height = round( window_size[1]/4)-50   , x_pos = 10                          , y_pos = round( window_size[1]*3/4)+5   )
         configure_item('log##MG'             , width = round(window_size[0]*2/5)-25, height = round( window_size[1])-70     , x_pos = round(window_size[0]*3/5)+5 , y_pos = 25   )
         configure_item('Visualização##MG'    , width = round(window_size[0]*3/5)-10, height = round( window_size[1]*3/4)-25 , x_pos = 10                          , y_pos = 25   )
     
+        configure_item('Configurações_M1##MG', width= get_item_width('log##MG')-15, height= get_item_height('log##MG')//2 - 25)
+        configure_item('RPM_M1##MG', width= get_item_width('Configurações_M1##MG')-10 )
+        configure_item('REDU_M1##MG', width= get_item_width('Configurações_M1##MG')-10 )
+        configure_item('RPM_OUT_M1##MG', width= get_item_width('Configurações_M1##MG')-10 )
+        set_value('RPM_OUT_M1##MG', value= get_value('RPM_M1##MG')*get_value('REDU_M1##MG')[0]/get_value('REDU_M1##MG')[1] )
+
+
     elif window_opened == "Atuação da elevação" :
-        configure_item('Infos_inferiores##ME', width = round(window_size[0]*3/5)-10, height = round( window_size[1]/4)-50   , x_pos = 10                          , y_pos = round( window_size[1]*3/4)+5   )
-        configure_item('log##ME'             , width = round(window_size[0]*2/5)-25, height = round( window_size[1])-70     , x_pos = round(window_size[0]*3/5)+5 , y_pos = 25   )
-        configure_item('Visualização##ME'    , width = round(window_size[0]*3/5)-10, height = round( window_size[1]*3/4)-25 , x_pos = 10                          , y_pos = 25   )
-    
+        configure_item('Infos_inferiores##ME', width = round(window_size[0]*3/5)-10 , height = round( window_size[1]/4)-50   , x_pos = 10                          , y_pos = round( window_size[1]*3/4)+5   )
+        configure_item('log##ME'             , width = round(window_size[0]*2/5)-25 , height = round( window_size[1])-70     , x_pos = round(window_size[0]*3/5)+5 , y_pos = 25   )
+        configure_item('Visualização##ME'    , width = round(window_size[0]*3/5)-10 , height = round( window_size[1]*3/4)-25 , x_pos = 10                          , y_pos = 25   )
+
+        configure_item('Configurações_M2##ME', width= get_item_width('log##ME')-15  , height= get_item_height('log##ME')//2 - 25)
+        
+        configure_item('RPM_M2##ME'          , width= get_item_width('Configurações_M2##ME')-10 )
+        configure_item('REDU_M2##ME'         , width= get_item_width('Configurações_M2##ME')-10 )
+        configure_item('RPM_OUT_M2##ME'      , width= get_item_width('Configurações_M2##ME')-10 )
+        
+        set_value('RPM_OUT_M2##ME', value = get_value('RPM_M2##ME')*get_value('REDU_M2##ME')[0]/get_value('REDU_M2##ME')[1] )
+
+
+
     elif window_opened == 'Configurações'       : 
         configure_item('Configurações##CONF', width = window_size[0]-25, height = window_size[1]-70, x_pos = 5, y_pos = 25 )
+
+    configure_item( 'Sair##Sair', x_pos= (get_main_window_size()[0]//2)-100 , y_pos= (get_main_window_size()[1]//2)-100 )
 
 
 def hora_manual(sender, data):
@@ -351,8 +384,6 @@ def initComport(sender, data):
     port     = get_value('PORT##AT')
     baudrate = get_value('BAUDRATE##AT')
     timeout  = get_value('TIMEOUT##AT')
-
-    '''
     try:
         comport = serial.Serial( port= port, baudrate = int(baudrate), timeout= timeout )
         print("Comport conectada")
@@ -360,7 +391,6 @@ def initComport(sender, data):
     except: 
         print("Comport não esta disponível")
         CONNECTED = False
-    '''
 
 
 # MAIN WINDOW WITH MENU BAR 
@@ -547,7 +577,7 @@ with window('Posição do sol - log'         , width = 440, height = 725, x_pos 
 
 
 # JANELAS DE ATUAÇÃO ## AT
-with window('Controle##AT'    , width= 400, height= 725, x_pos= 10, y_pos= 25  , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ):    
+with window('Controle##AT'    , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ):    
 
     add_spacing(count=2)
     add_text('CONFIGURAÇÕES DE COMUNICAÇÃO')
@@ -600,13 +630,16 @@ with window('Controle##AT'    , width= 400, height= 725, x_pos= 10, y_pos= 25  ,
         add_text('Micro Passos do motor:')
         add_combo('MicroPassosM2##AT', label='', default_value = '1/16', items= ['1', '1/2', '1/4', '1/8', '1/16', '1/32'] )
      
-with window('Retorno M1##AT'  , width= 835, height= 300, x_pos= 420, y_pos= 25 , no_move = True, no_resize = True, no_collapse = True, no_close = True):
+with window('Retorno##AT'  , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True):
+    pass     
+
+
+with window('Retorno M2##AT'  , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True):
+    ##add_drawing( 'engrenagem##AT', width= get_item_width("Retorno M2##AT"), height= get_item_height("Retorno M2##AT"))
+    #add_image('engrenagem##AT', 'img/engrenagem.png', width= get_item_width("Retorno M2##AT"), height= get_item_height("Retorno M2##AT"))
     pass
 
-with window('Retorno M2##AT'  , width= 835, height= 300, x_pos= 420, y_pos= 25 , no_move = True, no_resize = True, no_collapse = True, no_close = True):
-    pass
-    
-with window('Visualização##AT', width= 835, height= 300, x_pos= 420, y_pos= 25 , no_move = True, no_resize = True, no_collapse = True, no_close = True):
+with window('Visualização##AT', no_move = True, no_resize = True, no_collapse = True, no_close = True):
     pass
 
 
@@ -618,7 +651,22 @@ with window('Infos_inferiores##MG', no_move = True, no_resize = True, no_collaps
     pass
 
 with window('log##MG'             , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar = True):
-    pass
+    
+    add_spacing(count=2)
+    add_text('CONFIGURAÇÕES DO MOTOR DE GIRO')
+    with child('Configurações_M1##MG' ):
+        add_text('Rotação entrada (rpm): ')
+        add_input_float('RPM_M1##MG', default_value= 1750, format= '%10.2f', step= 1, label= '')
+        add_spacing( count= 1 )
+
+        add_text('Redução (entrada / saída):') 
+        add_input_float2('REDU_M1##MG', default_value= [1, 20], format= '%10.0f', label= '')
+        add_spacing( count= 1 )        
+        
+        add_text('Rotação saída:') 
+        add_input_float('RPM_OUT_M1##MG', default_value= 0, format= '%10.2f', label= '', callback= lambda sender, data : set_value('RPM_M1##MG', value= (get_value('RPM_OUT_M1##MG')*get_value('REDU_M1##MG')[1]/get_value('REDU_M1##MG')[0]) ) )
+        add_spacing( count= 1 )
+    
 
 
 # JANELA DE ATUAÇÃO DO MOTOR DE ELEVAÇÃO 
@@ -629,7 +677,20 @@ with window('Infos_inferiores##ME', no_move= True, no_resize= True, no_collapse=
     pass
 
 with window('log##ME'             , no_move= True, no_resize= True, no_collapse= True, no_close= True, no_title_bar = True):
-    pass
+    add_spacing(count=2)
+    add_text('CONFIGURAÇÕES DO MOTOR DE ELEVAÇÃO')
+    with child('Configurações_M2##ME'):
+        add_text('Rotação entrada (rpm): ')
+        add_input_float('RPM_M2##ME', default_value= 1750, format= '%10.2f', step= 1, label= '')
+        add_spacing( count= 1 )
+        
+        add_text('Redução (entrada / saída):') 
+        add_input_float2('REDU_M2##ME', default_value= [1, 20], format= '%10.0f', label= '')
+        add_spacing( count= 1 )        
+        
+        add_text('Rotação saída:') 
+        add_input_float('RPM_OUT_M2##ME', default_value= 0, format= '%10.2f', label= '', callback= lambda sender, data : set_value('RPM_M2##ME', value= (get_value('RPM_OUT_M2##ME')*get_value('REDU_M2##ME')[1]/get_value('REDU_M2##ME')[0]) ) )
+        add_spacing( count= 1 )
 
 
 
