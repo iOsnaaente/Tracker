@@ -8,8 +8,8 @@ struct STTime {
 struct STPosition {
   double julianDay       , tJD, tJC, tJC2, UT ;
   double longitude       , distance           ;
-  double obliquity       ,cosObliquity        , nutationLon    ;
-  double rightAscension  ,declination         , hourAngle,agst ;
+  double obliquity       , cosObliquity       , nutationLon    ;
+  double rightAscension  , declination        , hourAngle,agst ;
   double altitude        , altitudeRefract    , azimuthRefract ;
   double hourAngleRefract, declinationRefract ;
 };
@@ -77,6 +77,10 @@ int vel_ele = 100;
 bool dir_gir = 0 ;
 bool dir_ele = 0 ;
 
+int red_gir = 1; 
+int red_ele = 1; 
+
+int totalSegundos = 0;
 
 void setup () {
   Serial.begin(9600);
@@ -99,15 +103,6 @@ void setup () {
 }
 
 void loop () {
-    /*
-    uint8_t dir_x   = string_receive[0]; 
-    uint8_t ang_x   = string_receive[1];
-    uint8_t vel_x   = string_receive[2];
-    uint8_t dir_y   = string_receive[3];
-    uint8_t ang_y   = string_receive[4];
-    uint8_t vel_y   = string_receive[5];
-    */
-    
     //string_receive = ""; 
     //string_complete = false;
 
@@ -119,6 +114,9 @@ void loop () {
     int hour   =  Date.hour()+3;
     int minute =  Date.minute();
     int second =  Date.second();
+
+    totalSegundos = hour*3600 + minute*60 + second ;
+    //int totalDias     = Date.
 
     int azi, alt; 
 
@@ -133,8 +131,8 @@ void loop () {
     pos_gir += deltaAzi;
     pos_ele += deltaAlt; 
 
-    num_steps_gir = abs( (int)(deltaAzi * 8.888) ) ;
-    num_steps_ele = abs( (int)(deltaAlt * 8.888) ) ;
+    num_steps_gir = abs( (int)(deltaAzi * 8.888 * red_gir ) ) ;
+    num_steps_ele = abs( (int)(deltaAlt * 8.888 * red_ele ) ) ;
 
     dir_gir = deltaAzi > 0 ? true : false ; 
     dir_ele = deltaAlt > 0 ? true : false ;  
@@ -221,8 +219,11 @@ void printData(){
   Serial.print(num_steps_gir);
   Serial.print("\tNum_steps_ele : ");
   Serial.println(num_steps_ele);
-
-  Serial.println();
+  
+  Serial.print("Julians Days : ");
+  Serial.print(pos.julianDay );
+  Serial.print("\tTotal de segundos: ");
+  Serial.println(totalSegundos);
   
 }
 
