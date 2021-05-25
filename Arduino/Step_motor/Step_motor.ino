@@ -36,12 +36,14 @@ struct STLocation {
 // OBJETOS 
 RTC_DS3231 Clock; 
 DateTime   Date;
+//CRC8       CRC; 
 
 
 // PRECALL DE FUNÇÕES 
 void SolTrack(struct STTime time, struct STLocation location, struct STPosition *position,  int useDegrees, int useNorthEqualsZero, int computeRefrEquatorial, int computeDistance);
 void get_sun_position(int year, int month, int day, int hour, int minute, double second);
 void printHour();
+
 
 // INSTANCIAMENTO DAS STRUCTS 
 struct STLocation loc  ; 
@@ -51,11 +53,14 @@ struct STTime     time ;
 
 // VARIÁVEIS PARA USO 
 String string_receive        = ""    ;  
+
 bool   string_complete       = false ; 
+
 int    useDegrees            = true  ;         
 int    useNorthEqualsZero    = true  ;     
 int    computeRefrEquatorial = false ;  
 int    computeDistance       = false ;        
+
 float  azimute; 
 float  altitude; 
 
@@ -138,8 +143,9 @@ void loop () {
     dir_ele = deltaAlt > 0 ? true : false ;  
 
     step( dir_gir, num_steps_gir*10, vel_gir, dir_ele, num_steps_ele*10, vel_ele);
-        
-    printData(); 
+
+
+    
     delay(10000); 
 }
 

@@ -74,6 +74,7 @@ uPassosM2   = 0
 window_opened = ''
 
 
+
 # DESCOMENTAR PARA FUNCIONAR AS COMPORTS 
 #port_list = serialPorts(15)
 port_list = [] 
@@ -436,6 +437,7 @@ def update_values( dic : dict ):
     #MICRO_PASSO_M2
     #WINDOW_OPENED 
 
+    Perguntar para o leo do syhard
 
 ## DESCOMENTAR A CONEXÃO SERIAL
 CONNECTED = False
