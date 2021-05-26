@@ -4,12 +4,12 @@ from struct import pack
 from random import randint
 from time import sleep
  
-IP   = "192.168.4.19"
-PORT = 1883
+IP   = "192.168.4.35"
+PORT = 7777
 
  
 # Topicos providos por este sensor
-tt = "Bruno/fala/"
+tt = ''
  
 # Cria um identificador baseado no id do sensor
 client = mqtt.Client( client_id = 'NODE:120519', protocol = mqtt.MQTTv31 )

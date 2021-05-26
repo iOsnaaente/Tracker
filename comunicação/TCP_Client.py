@@ -2,27 +2,27 @@ import socket
 
 class Client_TCP:
 
-    HOST    = '127.0.0.1'     # IP address 
+    IP    = '127.0.0.1'     # IP address 
     PORT    = 5000            # Port where the server is connected
     TIMEOUT = 1               # Timeout in seconds 
     BUFF    = 1024            # Buffer to receive n bytes 
 
-    def __init__(self, HOST, PORT, timeout = 0 ):
+    def __init__(self, IP, PORT, timeout = 0 ):
 
-        self.HOST     = HOST
+        self.IP     = IP
         self.PORT       = PORT  
         self.TIMEOUT  = timeout
         self.BUFF     = 1024
 
         self.isAlive = False 
-
+        
         # Cria o socket TCP 
         self.tcp = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
 
         if self.TIMEOUT:                        # Seta o Timeout para bloqueante ou não bloqueante 
             self.tcp.settimeout( self.TIMEOUT ) # Timeout garante que a conexão irá durar esse tempo
 
-        self.server_addr = (HOST, PORT)           # Cria a tupla addr do server
+        self.server_addr = (IP, PORT)           # Cria a tupla addr do server
         self.connect_server()                   # Chama o método de conexão do servidor
 
 
@@ -47,7 +47,7 @@ class Client_TCP:
         if type(msg) is str:
             msg = msg.encode()
         elif type(msg) is not bytes:
-            print("Dados fora do padrão de envio TCP != str or bytes")
+            print("Dados fora do padrão de envio TCP != bytes")
 
         self.tcp.sendto( msg, self.server_addr )
 
@@ -55,7 +55,8 @@ class Client_TCP:
     """ Método para receber uma mensagem.
         Lembrar do timeout (segundos).
     """
-    def receive_message(self, show_msg ):
+    def receive_message(self, show_msg):
+
         try:
             msg = self.tcp.recvfrom( self.BUFF ) 
             if show_msg:
@@ -67,11 +68,12 @@ class Client_TCP:
                 print( "Receive ", err )
             return None 
 
-            
+
     """ setar o tamanho máximo do buffer.
     """
     def set_buffer(self, buff):
-        self.BUFF = buff 
+        self.BUFF = buff
+
 
     """
         Setar o timeout da conexão.
@@ -80,7 +82,26 @@ class Client_TCP:
         self.TIMEOUT = timeout
         self.tcp.settimeout( self.TIMEOUT )
 
+
     """ Encerrar a conexão TCP.
     """
     def close_connection(self):
         self.tcp.close()
+
+
+
+if __name__ == '__main__':
+
+    IP = '192.168.4.35'
+    PORT = 7777 
+
+    import datetime as dt 
+
+    cli = Client_TCP( IP, PORT )
+
+    msg = dt.datetime.now()  
+
+    posM1 = 120
+    posM2 = 182 
+
+    cli.send_message('Data:%s,posM1=%s,posM2=%s' %(msg, posM1, posM2) )
