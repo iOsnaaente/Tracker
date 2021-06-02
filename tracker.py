@@ -73,11 +73,13 @@ uPassosM2   = 0
 
 window_opened = ''
 
-
+num_wind = 1 
 
 # DESCOMENTAR PARA FUNCIONAR AS COMPORTS 
 #port_list = serialPorts(15)
 port_list = [] 
+
+color_maps2plot = ["Default", "Dark", "Pastel", "Paired", "Viridis", "Plasma", "Hot", "Cool", "Pink", "Jet"]
 
 
 # Configurações padrão 
@@ -85,6 +87,7 @@ w, h = 350, 225
 center = [w//2, h//2]
 r = 75 
  
+serial_log = []
 
 sun_data = SunPosition( LATITUDE, LONGITUDE, ALTITUDE )
 sun_data.update_date()
@@ -147,8 +150,7 @@ def render_update(sender, data):
         configure_item( "Configurações##IN"      , width = window_size[0]//3 - 15, height = v_spacing ) 
         
         configure_item('Main##IN' , width = (window_size[0]//3)*2 -37 , height = (window_size[1]//10)*6 , x_pos = window_size[0]//3 + 15, y_pos = (window_size[1]//10)*3 + 30 )
-        
-        
+    
     elif   window_opened == 'Visualização geral'  :
 
         configure_item('Solar_pos##VG', width = round(window_size[0]*2/3)          , height = round(window_size[1]*5/10)          )
@@ -284,6 +286,14 @@ def render_update(sender, data):
         passosM2    = get_value('PassosM2##AT'     )
         uPassosM2   = get_value('MicroPassosM2##AT')
 
+        try:
+            read_from = comport.readlines(5)
+            if read_from != []:
+                serial_log.append( read_from ) 
+            add_text('Serial: %s'%serial_log[-1])
+        except:
+            pass
+
     elif window_opened == "Atuação da base"     :
         configure_item('Infos_inferiores##MG', width = round(window_size[0]*3/5)-10, height = round( window_size[1]/4)-50   , x_pos = 10                          , y_pos = round( window_size[1]*3/4)+5   )
         configure_item('log##MG'             , width = round(window_size[0]*2/5)-25, height = round( window_size[1])-70     , x_pos = round(window_size[0]*3/5)+5 , y_pos = 25   )
@@ -314,7 +324,13 @@ def render_update(sender, data):
         configure_item('Configurações##CONF', width = window_size[0]-25, height = window_size[1]-70, x_pos = 5, y_pos = 25 )
 
     configure_item( 'Sair##Sair', x_pos= (get_main_window_size()[0]//2)-100 , y_pos= (get_main_window_size()[1]//2)-100 )
-
+    
+    global num_wind
+    if is_mouse_button_clicked(1):
+        add_window('window-%s'%num_wind, width=100, height= 100, x_pos= int(get_mouse_pos()[0]), y_pos= int(get_mouse_pos()[1]) )
+        num_wind += 1
+    if is_mouse_button_clicked(2):
+        print( get_mouse_pos() )
 
 def hora_manual(sender, data):
     # Verifica a condição do CheckBox
@@ -436,12 +452,13 @@ def update_values( dic : dict ):
     #MICRO_PASSO_M1
     #MICRO_PASSO_M2
     #WINDOW_OPENED 
-
-    Perguntar para o leo do syhard
+    pass 
 
 ## DESCOMENTAR A CONEXÃO SERIAL
 CONNECTED = False
+comport = 0 
 def initComport(sender, data):
+    global comport
     port     = get_value('PORT##AT')
     baudrate = get_value('BAUDRATE##AT')
     timeout  = get_value('TIMEOUT##AT')
@@ -649,7 +666,7 @@ with window('Controle##AT'        , no_move = True, no_resize = True, no_collaps
 
         # FAZER UMA THREAD PARA ESCUTAR NOVAS CONEXÕES SERIAIS 
         add_text('Selecione a porta serial: ')
-        add_combo('PORT##AT', default_value='COM', items= port_list)
+        add_combo('PORT##AT', default_value='COM11', items= port_list)
         add_spacing( count= 1 )
 
         add_text('Baudarate: ')
@@ -697,8 +714,13 @@ with window('Retorno M2##AT'      , no_move = True, no_resize = True, no_collaps
     ##add_drawing( 'engrenagem##AT', width= get_item_width("Retorno M2##AT"), height= get_item_height("Retorno M2##AT"))
     #add_image('engrenagem##AT', 'img/engrenagem.png', width= get_item_width("Retorno M2##AT"), height= get_item_height("Retorno M2##AT"))
     pass
+
 with window('Visualização##AT'    , no_move = True, no_resize = True, no_collapse = True, no_close = True):
-    pass
+    #add_group('plot_group##AT', show= True, tip= 'Gráfico de posição no tempo dos motores de giro e elevação', horizontal= True)
+    #add_plot
+    add_input_text('ComportReader##AT', label= '' ) 
+
+
 
 # JANELA DE ATUAÇÃO DO MOTOR DE GIRO 
 with window('Visualização##MG'    , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar = True):
@@ -765,8 +787,6 @@ with window('Configurações##CONF' , no_resize = True, no_collapse = True, no_c
     add_input_text('passosM2##config'             , default_value = str(passosM2)             , readonly = True )
     add_input_text('uPassosM2##config'            , default_value = str(uPassosM2)            , readonly = True )
 
-
-
 # VIEW PARA SAIR DO SUPERVISÓRIO
 with window('Sair##Sair'          , width= 175, height= 150, x_pos= (get_main_window_size()[0]//2)-100 , y_pos= (get_main_window_size()[1]//2)-100, no_resize = True, no_title_bar= True, show= False):
     add_text('     Deseja sair ?',)
@@ -774,7 +794,6 @@ with window('Sair##Sair'          , width= 175, height= 150, x_pos= (get_main_wi
     add_group('group_sair##Sair', horizontal= True )
     add_button('Sim##Sair', width= 75, callback= lambda sender, data : sys.exit(0) )
     add_button('Não##Sair', width= 75, callback= lambda sender, data : configure_item('Sair##Sair', show = False) )
-
 
 values_txt = read_arq( 'CONFIG.txt' ) 
 update_values( values_txt )
