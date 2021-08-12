@@ -29,7 +29,8 @@ class DS3231:
         self.num_pages = pages
         
 
-    def set_time(self, y : bytes, m : bytes, d : bytes, dow : bytes, hh : bytes, mm : bytes, ss : bytes ):
+    def set_time(self, y : bytes, m : bytes, d : bytes, hh : bytes, mm : bytes, ss : bytes ):
+        dow = self.get_DoW( y, m, d )
         buff = bytearray( [ self.dec2bcd(t) for t in [ss, mm, hh, dow, d, m, y] ] )
         self.DS_I2C.writeto_mem( self.ADDR_DS, 0x00, buff )  
         sleep_ms(1)
@@ -41,9 +42,17 @@ class DS3231:
         time.append( 3 )
         return time
     
-    
-    def get_day_of_week(self, day : bytes ) -> bytes:
-        return self.DoW[ day ]
+    def get_DoW(self, year : int, month : int, day : int) -> int :
+        year  = year if year < 99 else year & 0x63 
+        y_key = ((year//4 + year%7) % 7)-1 
+        m_key = [ 1, 4, 4, 0, 2, 5, 0, 3, 6, 1, 4, 6 ] 
+        DoW   = ( day + m_key[month-1] + y_key )
+        DoW   = DoW if DoW < 7 else DoW // 7 
+        return DoW if DoW >= 0 else 7 
+
+
+    def get_day_of_week(self ) -> bytes:
+        return self.DoW[ self.get_DoW ]
     
 
     def get_temperature( self ) -> float:
@@ -106,6 +115,7 @@ class DS3231:
         for i in range( nibble, len(buff), self.len_pages ) :
             self.DS_I2C.writeto_mem( self.ADDR_EE, addr-nibble+i, buff[i:i+self.len_pages], addrsize=16)
             sleep_ms(1)
+
 
 
 

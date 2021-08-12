@@ -6,7 +6,14 @@
 #define PAGE_PROGRAM_STAT       0x02 // Address Status Page Program
 #define CHIP_COMMAND_ID         0x9f // Address Status Read Id
 
-// ESPERA O 25Q32 RETORNAR UM VALOR CONFIRMANDO QUE ESTA DIPONÍVEL
+/// INICIA OS PARAMETROS DO SPI 
+void initSPI(){
+  SPI.begin();
+  SPI.setDataMode(0);
+  SPI.setBitOrder( MSBFIRST );
+}
+
+/// ESPERA O 25Q32 RETORNAR UM VALOR CONFIRMANDO QUE ESTA DIPONÍVEL
 void not_busy(){
   digitalWrite( SS, HIGH );
   digitalWrite( SS, LOW  );
@@ -104,11 +111,4 @@ void writeBytes( uint32_t page, byte offset, byte *data, byte len){
   for ( byte i=0; i<len; i++)
     buff[offset + i] = data[i]; 
   writePage( page, buff );
-}
-
-// INICIA OS PARAMETROS DO SPI 
-void initSPI(){
-  SPI.begin();
-  SPI.setDataMode(0);
-  SPI.setBitOrder( MSBFIRST );
 }
