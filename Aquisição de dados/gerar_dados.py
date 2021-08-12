@@ -1,14 +1,13 @@
-from dearpygui.core import * 
-from dearpygui.simple import * 
+from dearpygui.dearpygui import *
+from math                import degrees
 
-from math import degrees
 import datetime as dt 
-import pandas as pd
-import ephem as ep 
+import pandas   as pd
+import ephem    as ep 
+
 
 azi  = 0.0 
 alt = 0.0 
-
 
 date = '' 
 
@@ -67,26 +66,20 @@ def deg( data : list, func ) -> list:
 
 def plot_graph():
     read_from = pd.read_csv( 'data.csv')    
-    
     date_data = [ num for num, value in enumerate( read_from['date']) ] 
-    azi_data  =  [ degrees(value) for value in read_from['azimute']   ]
-    alt_data  =  [ degrees(value) for value in read_from['altitude']  ]
+    azi_data  = [ degrees(value) for value in read_from['azimute']    ]
+    alt_data  = [ degrees(value) for value in read_from['altitude']   ]
 
-    with window('main'):
-
-        add_group('unidosSomosMais', horizontal= False )
-        add_plot('plotAzi', x_axis_name= 'data', width= 800, height= 350,)
-        add_line_series('plotAzi', name = 'plot-azi_data ' , x = date_data, y = azi_data  )
+    with window(label='main') as win:
+        add_group(       label='unidosSomosMais', horizontal= False )
+        add_plot(        label='plotAzi'        , width= 800    , height= 350  , id = 1 )
+        add_line_series( label='plotAzi'        , x = date_data , y = azi_data , id = 2 )
+        add_plot(        label='plotAlt'        , width= 800    , height= 350  , id = 3 )
+        add_line_series( label='plotAlt'        , x = date_data , y = alt_data , id = 4 )
         
-        add_plot('plotAlt', x_axis_name= 'data', width= 800, height= 350 )
-        add_line_series('plotAlt', name = 'plot-alt_data ' , x = date_data, y = alt_data  )
-        
-
-    start_dearpygui( primary_window= 'main')
+    start_dearpygui( primary_window= win)
 
 if __name__ == '__main__':
-
     sample = compute_samples(observer)
     write_samples( sample )
-
     plot_graph()

@@ -4,7 +4,7 @@ from simple_3dviz.utils import render
 
 # We can load meshes from a file by specifying its path or by explicitely
 # giving the vertices and the normals of the mesh you want to render
-m = Mesh.from_file("models/baby_yoda.stl")
+m = Mesh.from_file("models/GIR_PAINEL.stl")
 
 # Preview the mesh in an OpenGL window if you installed wxpython with pip
 # Note that you can specify the size (size) and the background color
@@ -13,13 +13,12 @@ m = Mesh.from_file("models/baby_yoda.stl")
 # direction that indicates which direction is "up" (up_vector). Finally you can
 # also specify the location of the light source as well a set of behaviours to
 # be performed.
-show(m, camera_position=(-60., -160, 120), camera_target=(0., 0, 40),
-     light=(-60, -160, 120))
+show(m, camera_position=(-60., -160, 120), camera_target=(0., 0, 40),light=(-60, -160, 120))
 
 # Our rendered mesh looks nice already but it is still not very accurate. This
 # can be fixed by properly adjuasting the color of the input mesh through the
 # color argument
-m = Mesh.from_file("models/baby_yoda.stl", color=(0.1,0.5,0.1))
+m = Mesh.from_file("models/GIR_PAINEL.stl", color=(0.1,0.5,0.1))
 
 # We can specify various interesting behaviours while rendering our mesh
 # Lets start by moving the camera around the object in a circular trajectory
@@ -53,15 +52,10 @@ show(m, camera_position=(-60., -160, 120), camera_target=(0., 0, 40),
 from simple_3dviz.behaviours.io import SaveFrames
 # To store the rendered frames to files, we can use the SaveFrames behaviour.
 # We simply need to specify the path to save the rendered frames (path).
-render(m,
-       behaviours=[
-            ctrj,
-            LightToCamera(),
-            SaveFrames("/tmp/frame_{:03d}.png", every_n=5)
-       ],
-       n_frames=512,
-       camera_position=(-60., -160, 120), camera_target=(0., 0, 40),
-       light=(-60, -160, 120)
+render(m, behaviours = [ ctrj, LightToCamera(), SaveFrames("/tmp/frame_{:03d}.png", every_n=5) ],
+          n_frames=512,
+          camera_position=(-60., -160, 120), camera_target=(0., 0, 40),
+          light=(-60, -160, 120)
 )
 
 # It is also possible to implement some more exciting motions, e.g. having the
@@ -69,10 +63,7 @@ render(m,
 from simple_3dviz.behaviours.trajectory import BackAndForth, Lines
 render(m,
        behaviours=[
-            CameraTrajectory(
-                BackAndForth(Lines([-60, -160, 120], [-60, -80, 120])),
-                speed=0.005
-            )
+            CameraTrajectory( BackAndForth(Lines([-60, -160, 120], [-60, -80, 120])), speed=0.005 ),
             LightToCamera(),
             SaveFrames("/tmp/frame_{:03d}.png", every_n=5)
        ],
@@ -83,9 +74,9 @@ render(m,
 
 # Let's now try something more exciting! We start, by loading our baby Yoda
 # mesh multiple times with different colors
-m1 = Mesh.from_file("models/baby_yoda.stl", color=(0.1,0.5,0.1))
-m2 = Mesh.from_file("models/baby_yoda.stl", color=(0,1.0,1.0))
-m3 = Mesh.from_file("models/baby_yoda.stl", color=(0.5,0.1,0.1))
+m1 = Mesh.from_file("models/GIR_PAINEL.stl", color=(0.1,0.5,0.1))
+m2 = Mesh.from_file("models/GIR_PAINEL.stl", color=(0,1.0,1.0))
+m3 = Mesh.from_file("models/GIR_PAINEL.stl", color=(0.5,0.1,0.1))
 
 # We space the meshes across a line in the 3D space, by properly adjusting
 # their offset parameter
