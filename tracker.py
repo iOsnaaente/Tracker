@@ -131,7 +131,7 @@ def render_update(sender, data):
 
     window_size = get_main_window_size() 
 
-    if window_opened == 'Inicio'                :
+    if window_opened == 'Inicio'                 :
         
         configure_item( 'Header##IN', width = window_size[0]-35                , height = (window_size[1]//10)*3           )
         configure_item( "headerImage", width = get_item_width('Header##IN')-16 , height = get_item_height('Header##IN')-16 )
@@ -151,7 +151,7 @@ def render_update(sender, data):
         
         configure_item('Main##IN' , width = (window_size[0]//3)*2 -37 , height = (window_size[1]//10)*6 , x_pos = window_size[0]//3 + 15, y_pos = (window_size[1]//10)*3 + 30 )
     
-    elif   window_opened == 'Visualização geral'  :
+    elif window_opened == 'Visualização geral'   :
 
         configure_item('Solar_pos##VG', width = round(window_size[0]*2/3)          , height = round(window_size[1]*5/10)          )
         configure_item('Solar_pos##VG', x_pos = 10, y_pos = 25 )
@@ -220,7 +220,7 @@ def render_update(sender, data):
         set_value('Culminante'   , [ sun_data.transit.hour+sun_data.utc_local, sun_data.transit.minute, sun_data.transit.second ] )
         set_value('Por do sol'   , [ sun_data.sunset.hour+sun_data.utc_local , sun_data.sunset.minute , sun_data.sunset.second  ] )    
 
-    elif window_opened == 'Posição do sol'      : 
+    elif window_opened == 'Posição do sol'       : 
         
         # Definição da Latitude/Longitude 
         sun_data.latitude  = str( get_value('Latitude (º)##PS' ) )
@@ -250,7 +250,7 @@ def render_update(sender, data):
 
         set_value ( 'UTM local (h)##PS'     , value = sun_data.utc_local )
 
-    elif window_opened == "Atuadores"           :
+    elif window_opened == "Atuadores"            :
 
         configure_item('Controle##AT'       , width = round( window_size[0]/3 ) - 20                                     , height = window_size[1] - 75               )
         configure_item('Controle##AT'       , x_pos = 10                                                                 , y_pos = 25                                 )
@@ -294,7 +294,7 @@ def render_update(sender, data):
         except:
             pass
 
-    elif window_opened == "Atuação da base"     :
+    elif window_opened == "Atuação da base"      :
         configure_item('Infos_inferiores##MG', width = round(window_size[0]*3/5)-10, height = round( window_size[1]/4)-50   , x_pos = 10                          , y_pos = round( window_size[1]*3/4)+5   )
         configure_item('log##MG'             , width = round(window_size[0]*2/5)-25, height = round( window_size[1])-70     , x_pos = round(window_size[0]*3/5)+5 , y_pos = 25   )
         configure_item('Visualização##MG'    , width = round(window_size[0]*3/5)-10, height = round( window_size[1]*3/4)-25 , x_pos = 10                          , y_pos = 25   )
@@ -307,7 +307,7 @@ def render_update(sender, data):
 
         set_value('RPM_OUT_M1##MG', value= get_value('RPM_M1##MG')*get_value('REDU_M1##MG')[0]/get_value('REDU_M1##MG')[1] )
 
-    elif window_opened == "Atuação da elevação" :
+    elif window_opened == "Atuação da elevação"  :
         configure_item('Infos_inferiores##ME', width = round(window_size[0]*3/5)-10 , height = round( window_size[1]/4)-50   , x_pos = 10                          , y_pos = round( window_size[1]*3/4)+5   )
         configure_item('log##ME'             , width = round(window_size[0]*2/5)-25 , height = round( window_size[1])-70     , x_pos = round(window_size[0]*3/5)+5 , y_pos = 25   )
         configure_item('Visualização##ME'    , width = round(window_size[0]*3/5)-10 , height = round( window_size[1]*3/4)-25 , x_pos = 10                          , y_pos = 25   )
@@ -320,7 +320,7 @@ def render_update(sender, data):
         
         set_value('RPM_OUT_M2##ME', value = get_value('RPM_M2##ME')*get_value('REDU_M2##ME')[0]/get_value('REDU_M2##ME')[1] )
 
-    elif window_opened == 'Configurações'       : 
+    elif window_opened == 'Configurações'        : 
         configure_item('Configurações##CONF', width = window_size[0]-25, height = window_size[1]-70, x_pos = 5, y_pos = 25 )
 
     configure_item( 'Sair##Sair', x_pos= (get_main_window_size()[0]//2)-100 , y_pos= (get_main_window_size()[1]//2)-100 )
@@ -515,6 +515,7 @@ with window('AtuaçãoBase##VG'     , no_move = True, no_resize = True, no_colla
     draw_arrow('MotorBase', tag='Sun',   p1 = [ 0, 0 ], p2 = center, color = color['green'](155), thickness= 5, size=10)
     draw_arrow('MotorBase', tag='Motor', p1 = [ 0, 0 ], p2 = center, color = color['red'](155),   thickness= 5, size=10)
     draw_circle('MotorBase', center, 5, [255,255,0,175], fill=True )
+    
 with window('AtuaçãoElevação##VG' , no_move = True, no_resize = True, no_collapse = True, no_close = True ):
     # Área de desenho 
     add_drawing('MotorElevação', width= w-10, height=h-10)
@@ -522,6 +523,7 @@ with window('AtuaçãoElevação##VG' , no_move = True, no_resize = True, no_col
     draw_arrow('MotorElevação', tag='Sun',   p1 = [ 0, 0 ], p2 = center, color = color['green'](150), thickness= 5, size=10)
     draw_arrow('MotorElevação', tag='Motor', p1 = [ 0, 0 ], p2 = center, color = color['red'](200),   thickness= 5, size=10)
     draw_circle('MotorElevação', center, 5, color['yellow'](155), fill=True)
+
 with window('log##VG'             , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar = True ):
     #Informações gerais do sistema - Automático 
     add_text('Informações gerais do sistema')
