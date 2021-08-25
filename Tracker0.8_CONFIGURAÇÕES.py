@@ -85,6 +85,7 @@ with window( label = 'Main Window', id = 1_0, autosize = True ) as main_window:
         add_menu_item( label="Configurações"      , callback = change_menu, user_data = "Configurações"       )
         add_menu_item( label='Sair'               , callback = change_menu, user_data = 'Sair'                )
 
+
 def init_configuracoes(): 
 
     def att_theme_style( sender, data, user ):
@@ -333,8 +334,7 @@ def render_configuracao():
 setup_viewport()
 screen_dimension = [ GetSystemMetrics(0), GetSystemMetrics(1) ] 
 
-show_style_editor()
-show_documentation() 
+init_configuracoes() 
 
 set_viewport_title( title = 'Configurações' )
 set_viewport_pos( [55,0] )

@@ -289,7 +289,7 @@ with window( label ='Azimute'     , id = 44_0, width= 495, height= 330, pos = [4
         r    = (w/2)*1.25 if w < h else (h/2)*1.25 
         configure_item( 44_1_8, p1 = [w + r*cos(math.radians(MG_Angle)+math.pi*3/2), h + r*sin( math.radians(MG_Angle)+math.pi*3/2)] )
         send_serial()
-
+    
     w,h = get_item_width(azimute_config_AT), get_item_height(azimute_config_AT)
     
     draw_arrow(  parent = 44_1_0, id = 44_1_8, p1 = [w//2 + r*cos(math.pi/2), h//2 + r*sin(math.pi/2)], p2 = [ w//2, h//2 ], color = color['yellow'](200), thickness = 2, size = 10  )

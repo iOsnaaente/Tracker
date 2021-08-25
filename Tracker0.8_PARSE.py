@@ -57,6 +57,8 @@ buff_bytes    = b''
 BUFF_MAX      = 30 
 buff_count    = 0
 
+count = 0 
+
 color = {
     "black"   : lambda alfa : [   0,   0,   0, alfa ],
     "red"     : lambda alfa : [ 255,   0,   0, alfa ],
@@ -216,9 +218,32 @@ def render_visualizacao():
     set_value( 2_3_17, [ sun_data.transit.hour+sun_data.utc_local, sun_data.transit.minute, sun_data.transit.second ] ) # 'Culminante'   
     set_value( 2_3_18, [ sun_data.sunset.hour+sun_data.utc_local , sun_data.sunset.minute , sun_data.sunset.second  ] ) # 'Por do sol'      
 
+def render_atuador():
+    global count
+    DAY_2Compute = get_value( 42_5_1 )
+    MG_Resolucao = get_value( 43_1_1 ) 
+    MG_Steps     = get_value( 43_1_2 ) 
+    MG_uStep     = get_value( 43_1_3 ) 
+    ME_Resolucao = get_value( 43_2_1 ) 
+    ME_Step      = get_value( 43_2_2 ) 
+    ME_uStep     = get_value( 43_2_3 ) 
+    MG_Angle     = get_value( 44_1   ) 
+    ME_Angle     = get_value( 45_1   )
+
+    att_Serial_Pico( COMP )
+    att_CMD_Pico( COMP )
+
+    if count == 30:
+        ajust_win( serial_AT        , [455, 330], [10 , 25 ] )
+        ajust_win( config_AT        , [455, 480], [10 , 360] )
+        ajust_win( azimute_config_AT, [495, 330], [470, 25 ] )
+        ajust_win( zenite_config_AT , [495, 330], [970, 25 ] )
+        ajust_win( draw_tracker_AT  , [995, 480], [470, 360] )
+        count = 0
+    else: 
+        count += 1 
 
 def render_configuracao():
-    add_lock()
     w, h = get_item_width( 1_0 ), get_item_height( 1_0 ) 
     configure_item( 7_1_0, pos = [ 10            , 25 ], width = (w*(1/3))//1, height = (h*0.965)//1 ) 
     configure_item( 7_2_0, pos = [ w*(1/3)   + 10, 25 ], width = (w*(7/15)-5 )//1, height = (h*0.965)//1 ) 
@@ -290,7 +315,6 @@ def hover_buttons_IN( sender, data, user):
         configure_item( 1_3_1, default_value = user)
     elif user == "Configurações"       :
         configure_item( 1_3_1, default_value = user)
-
 
 def get_nBytes( comp : Serial ): 
     if comp.isOpen():
@@ -784,6 +808,197 @@ def init_configuracao():
         add_text( 'Um exemplo de color picker', bullet = True  ) 
         add_color_picker() 
 
+def init_atuador():
+    # Serial Config 
+    with window( label = 'Serial'     , id = 42_0, width= 455, height= 330, pos = [10,25], no_resize=True, no_move = True, no_collapse = True, no_close = True, no_title_bar = True) as serial_AT: 
+        windows['Atuadores'].append( serial_AT )
+
+        add_spacing(count=2)
+        add_text('CONFIGURAÇÕES DE COMUNICAÇÃO')
+
+        # FAZER UMA THREAD PARA ESCUTAR NOVAS CONEXÕES SERIAIS 
+        add_text('Selecione a porta serial: ')
+        add_combo( id=42_1, default_value='COM15', items= ['COM1', 'COM4', 'COM15', 'COM16'] )
+        add_same_line( )
+
+        def SR_refresh():
+            seriais = serialPorts( lenght = 20 )
+            configure_item( 42_1, items = seriais )
+
+        add_button( label='Refresh', callback= SR_refresh )
+
+        add_spacing( count= 1 )
+
+        add_text('Baudarate: ')
+        add_combo( id=42_2, default_value= '115200', items=[ '9600', '57600', '115200'] )
+        add_spacing( count= 1 )
+
+        add_text('Timeout: ')
+        add_input_int( id=42_3, default_value= 1)
+        add_spacing( count= 5 )
+
+
+        def SR_try_connect( sender, data, user): 
+            global CONNECTED
+            global COMP 
+            SR_Port      = get_value( 42_1   )
+            SR_Baudrate  = get_value( 42_2   )
+            SR_Timeout   = get_value( 42_3   )  
+
+            # CORRIGIR PARA QUE NÃO FECHE A MESMA COMP
+            if COMP.isOpen():
+                COMP.close()
+            try: 
+                COMP = Serial( port = SR_Port, baudrate = SR_Baudrate, timeout = SR_Timeout )
+                show_item( 42_6 )
+                CONNECTED = True 
+            except:
+                hide_item( 42_6 )
+                CONNECTED = False 
+
+        add_button(label='Iniciar conexão##AT',  id=42_4, callback= SR_try_connect )
+        add_same_line()
+        add_button(label="DESCONECTAR ?", width=150, id = 42_6, callback= lambda : hide_item(42_6) if not COMP.close() else 1 )
+        hide_item( 42_6) 
+        add_spacing(count= 3)
+
+        with child( id=42_5_0, autosize_x= True, autosize_y= True, no_scrollbar=True, border= True ):
+            add_text( 'Data Calculada:' )
+            add_text( id = 42_5_1, default_value='No data')
+            add_button(label="Atualizar", width=100, id = 42_5_2, callback= lambda : set_value( 42_5_1, str(dt.datetime.now().strftime('%A %d/%m/%Y - %H:%M:%S')) ) if sun_data.update_date() == None else 1 )
+            add_same_line()
+            add_button(label="Limpar", width=100, id = 42_5_3, callback= lambda : set_value( 42_5_1, 'No data' ) )
+
+    # Step Motors Config 
+    with window( label = 'Motores'    , id = 43_0, width= 455, height= 480, pos = [10,360], no_resize=True, no_move = True, no_collapse = True, no_close = True, no_title_bar = True) as config_AT:
+        windows['Atuadores'].append( config_AT )
+        # DEFNIÇÃO DOS MOTORES INDIVUDUAIS 
+        add_text('DEFINIÇÃO DOS MOTORES DE PASSO')
+        
+        with child( id=43_1_0, label = 'MotorGiro##AT', width= get_item_width( config_AT )-15, height= 200):
+            add_text("Motor de Rotação da base - Motor 1")
+            add_spacing(count=2)
+            add_text('Resolução:')
+            add_input_float( id=43_1_1, label='ResoluçãoM1##AT', default_value= 1.8, format= '%3.2f', callback= lambda sender, data : set_value('PassosM1##AT', value= (360/get_value('ResoluçãoM1##AT') if get_value('ResoluçãoM1##AT') > 0 else 0 ) ) )
+            add_spacing(count=2)
+
+            add_text('Passos por volta:')
+            add_drag_float( id=43_1_2, label='PassosM1##AT', default_value=  360 / 1.8, format='%5.2f', no_input= True )
+            add_spacing(count= 2)
+            add_text('Micro Passos do motor:')
+            add_combo( id=43_1_3, label='MicroPassosM1##AT', default_value = '1/16', items= ['1', '1/2', '1/4', '1/8', '1/16', '1/32'] )
+        add_spacing(count= 2)
+
+        with child(id=43_2_0,label = 'MotorElevação##AT',  width= get_item_width(config_AT)-15, height= 200 ):
+            add_text("Motor de Rotação da base - Motor 2")
+            add_spacing(count=2)
+            add_text('Resolução:')
+            add_input_float(id=43_2_1, label='ResoluçãoM2##AT', default_value= 1.8, format= '%3.2f', callback= lambda sender, data : set_value('PassosM2##AT', value= (360/get_value('ResoluçãoM2##AT') if get_value('ResoluçãoM2##AT') > 0 else 0 ) ) )
+            add_spacing(count=2)
+            add_text('Passos por volta:')
+            add_drag_float(id=43_2_2, label='PassosM2##AT', default_value=  360 / 1.8, format='%5.2f', no_input= True )
+            add_spacing(count= 2)
+            add_text('Micro Passos do motor:')
+            add_combo(id=43_2_3, label='MicroPassosM2##AT', default_value = '1/16', items= ['1', '1/2', '1/4', '1/8', '1/16', '1/32'] ) 
+
+    # Azimute Draw 
+    with window( label ='Azimute'     , id = 44_0, width= 495, height= 330, pos = [470,25], no_resize=True, no_move = True, no_collapse = True, no_close = True, no_title_bar = True) as azimute_config_AT: 
+        windows['Atuadores'].append( azimute_config_AT)
+        
+        add_drawlist( id = 44_1_0  , width = 495, height = 330, pos = [0,-25] )
+        
+        w, h = [ get_item_width(44_1_0)/2, get_item_height(44_1_0)/2] 
+        r    = (w/2)*1.25 if w < h else (h/2)*1.25 
+        p    = 20
+
+        draw_circle(parent = 44_1_0, id = 44_1_1, center = [ w       , h     ] , radius =  r            , color = color['white'](200), thickness = 2 )
+        draw_line(  parent = 44_1_0, id = 44_1_2, p1     = [ w - r   , h     ] , p2     = [ w + r, h ]  , color = color['gray'](200) , thickness = 2 )
+        draw_text(  parent = 44_1_0, id = 44_1_3, pos    = [ w - r-p , h-7.5 ] , text   = 'W'           , color = color['white'](200), size = 20     )
+        draw_text(  parent = 44_1_0, id = 44_1_4, pos    = [ w + r+p , h-7.5 ] , text   = 'E'           , color = color['white'](200), size = 20     )
+        draw_text(  parent = 44_1_0, id = 44_1_5, pos    = [ w -6    , h-r-p ] , text   = 'N'           , color = color['white'](255), size = 20     )
+
+        ## RENDERIZAÇÃO
+        ang_ris = sun_data.get_azi_from_date( sun_data.rising )[1] # [ alt , azi ]
+        ang_set = sun_data.get_azi_from_date( sun_data.sunset )[1] # [ alt , azi ]
+        draw_line(  parent = 44_1_0, id = 44_1_6, p1 = [ w, h], p2 = [w + r*cos(ang_ris-math.pi/2), h + r*sin(ang_ris-math.pi/2)], color = color['gray'](200), thickness= 2 )
+        draw_line(  parent = 44_1_0, id = 44_1_7, p1 = [ w, h], p2 = [w + r*cos(ang_set-math.pi/2), h + r*sin(ang_set-math.pi/2)], color = color['gray'](200), thickness= 2 )
+    
+        def move_azi(sender, data, user): 
+            global MG_Angle
+            MG_Angle = get_value(44_2)
+            w, h = [ get_item_width(44_1_0)/2, get_item_height(44_1_0)/2]     
+            r    = (w/2)*1.25 if w < h else (h/2)*1.25 
+            configure_item( 44_1_8, p1 = [w + r*cos(math.radians(MG_Angle)+math.pi*3/2), h + r*sin( math.radians(MG_Angle)+math.pi*3/2)] )
+
+        w,h = get_item_width(azimute_config_AT), get_item_height(azimute_config_AT)
+        
+        draw_arrow(  parent = 44_1_0, id = 44_1_8, p1 = [w//2 + r*cos(math.pi/2), h//2 + r*sin(math.pi/2)], p2 = [ w//2, h//2 ], color = color['yellow'](200), thickness = 2, size = 10  )
+        draw_arrow(  parent = 44_1_0, id = 44_1_9, p1 = [w//2 + r*cos(math.pi/2), h//2 + r*sin(math.pi/2)], p2 = [ w//2, h//2 ], color = color['red'](200) , thickness = 2, size = 10  ) 
+        hide_item( 44_1_9 )
+
+        add_slider_float( id     = 44_2  , pos = [ w*0.025, h-50], width  = w*0.95, height = 50, min_value=0, max_value=360, indent=0.001, enabled=True, callback= move_azi )
+        move_item_up(44_2)
+
+    # Zenite / Altitude Draw 
+    with window(label  = 'Zenite'     , id = 45_0, width= 495, height= 330, pos = [970,25], no_resize=True, no_move = True, no_collapse = True, no_close = True, no_title_bar = True) as zenite_config_AT:
+        windows['Atuadores'].append( zenite_config_AT )  
+
+        def draw_semi_circle( parent, id, center, radius, angle_i, angle_f, color, segments = 360, closed = False, thickness = 1 ):
+            angles = [ ((angle_f - angle_i)/segments)*n for n in range(segments) ] 
+            points = [ [ center[0] + radius*cos(ang), center[1] - radius*sin(ang) ] for ang in angles ]
+            draw_id = draw_polyline ( parent = parent, id = id, points = points, color= color, closed = closed, thickness= thickness )
+
+        w, h = get_item_width(zenite_config_AT), get_item_height(zenite_config_AT)
+        r    = w//1.3 if w < h else h//1.3
+        pyi = 10
+        pxi = 100 
+        p   = 10 
+
+        add_drawlist(     id     = 45_1_0, width  = w*0.95 , height = h*0.95         , pos = [0,0] )
+        draw_polyline(    parent = 45_1_0, id     = 45_1_1 , points = [ [ pxi, pyi ] , [ pxi, pyi+r ], [ pxi + r, pyi + r ] ], color = color['white'](200), thickness= 2               )
+        draw_semi_circle( parent = 45_1_0, id     = 45_1_2 , center = [ pxi, pyi + r], radius = r, angle_i = 0, angle_f = math.radians(91)  , color = color['white'](200), segments= 90, thickness= 2 )
+        
+        # RENDERIZAÇÃO 
+        ang_transit = sun_data.get_azi_from_date( sun_data.transit )[0] # [ alt , azi ]
+        ang_altitud = sun_data.alt
+
+        draw_line( parent = 45_1_0, id = 45_1_3, p1  = [ pxi, pyi+r ], p2 = [pxi + r*cos(ang_transit), pyi+r*(1-sin(ang_transit))] , color = color['red'](200)   , thickness = 2             )
+        draw_arrow(parent = 45_1_0, id = 45_1_4, p1  = [ pxi + r*cos(ang_altitud), pyi+r*(1-sin(ang_altitud))], p2 = [pxi, pyi+r]  , color = color['yellow'](200), thickness = 3, size = 10  ) 
+        draw_text( parent = 45_1_0, id = 45_1_5, pos = [ w-75, pyi] , text = "Altura:"                                             , color = color['white'](255) , size = 15                 )
+        draw_text( parent = 45_1_0, id = 45_1_6, pos = [ w-75, 25]  , text = str( round(math.degrees(ang_altitud)) )+'º'           , color = color['white'](255) , size = 15                 )  
+        
+        draw_arrow(parent = 45_1_0, id = 45_1_7, p1  = [ pxi + r*cos(0), pyi+r*(1-sin(0))], p2 = [pxi, pyi+r]  , color = color['red'](200), thickness = 3, size = 10  ) 
+        hide_item( 45_1_7 )
+
+        def move_alt( sender, data, user ):
+            global ME_Angle
+            ME_Angle = get_value(45_2)
+            w, h = get_item_width( zenite_config_AT ), get_item_height( zenite_config_AT )
+            r    = w//1.3 if w < h else h//1.3
+            configure_item( 45_1_4, p1 = [ pxi + r*cos(ME_Angle), pyi+r*(1-sin(ME_Angle))] )
+            configure_item( 45_1_6, text = str( round(math.degrees(ME_Angle)) )+'º' )
+
+        add_slider_float( id = 45_2, pos=[w*0.025,h-50], width= w*0.95, min_value= 0, max_value= math.pi/2, indent = 0.01, callback= move_alt )
+        move_item_up(45_2)
+
+    # General Draw 
+    with window( label = 'Draw_Window', id = 46_0, width= 995, height= 480, pos = [470,360], no_resize=True, no_move = True, no_collapse = True, no_close = True, no_title_bar = True) as draw_tracker_AT:
+        windows['Atuadores'].append( draw_tracker_AT )  
+    
+        with child(id = 46_1_0, width = (get_item_width(46_0)*0.3) , autosize_y = True, border = False):
+            add_text( 'Informações recebidas pela Serial: ')
+            with child( id = 46_1_1_0, width = get_item_width(46_1_0), autosize_y = True, border = True ):
+                add_text('Informações do sistema:')
+                add_spacing()
+                add_text( id = 46_1_1_1, default_value = 'DISCONNECTED...' )
+
+        add_same_line()
+        with child( id = 46_2_0, width= (get_item_width(46_0)*0.7), autosize_y = True, border = False ):
+            add_text( 'PICO_SM: RASPICO Serial Monitor')
+            with child( id = 46_2_1_0, autosize_x= True, autosize_y= True, border= True):
+                add_text( 'CMD:')       
+                add_text( id = 46_2_1_1, default_value = 'DISCONNECTED...' )
+
 
 
 screen_dimension = [ GetSystemMetrics(0), GetSystemMetrics(1) ] 
@@ -797,7 +1012,9 @@ set_primary_window ( main_window, True   )
 
 init_inicio()
 init_visualizacao() 
+init_atuador() 
 init_configuracao() 
+
 change_menu(None, None, 'Inicio' )
 
 
@@ -813,6 +1030,9 @@ while is_dearpygui_running():
     elif window_opened == 'Visualização geral':
         render_visualizacao() 
 
+    elif window_opened == 'Atuadores':
+        render_atuador()     
+        
     elif window_opened == 'Configurações':
         render_configuracao() 
     

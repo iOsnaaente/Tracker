@@ -408,24 +408,10 @@ with window( label = 'Draw_Window', id = 46_0, width= 995, height= 480, pos = [4
             add_text( id = 46_2_1_1, default_value = 'DISCONNECTED...' )
 
 
-setup_viewport()
-screen_dimension = [ GetSystemMetrics(0), GetSystemMetrics(1) ] 
-set_viewport_title( title = 'Controle dos motores - Unic' )
-set_viewport_pos( [55,0] )
-set_viewport_width(  screen_dimension[0] )
-set_viewport_height( screen_dimension[1] )
-
-set_primary_window( main_window, True )
-change_menu(None, None, 'Atuadores' )
-
-
-count = 0
-while is_dearpygui_running():
-    count += 1
-
-    render_dearpygui_frame()
-
-    if window_opened == 'Atuadores':
+def render_atuador() : 
+    att_Serial_Pico( COMP )
+    att_CMD_Pico( COMP )
+    if not get_frame_count() % 30:
         DAY_2Compute = get_value( 42_5_1 )
         MG_Resolucao = get_value( 43_1_1 ) 
         MG_Steps     = get_value( 43_1_2 ) 
@@ -436,13 +422,24 @@ while is_dearpygui_running():
         MG_Angle     = get_value( 44_1   ) 
         ME_Angle     = get_value( 45_1   )
 
-        att_Serial_Pico( COMP )
-        att_CMD_Pico( COMP )
-
-    if count == 30:
         ajust_win( serial_AT        , [455, 330], [10 , 25 ] )
         ajust_win( config_AT        , [455, 480], [10 , 360] )
         ajust_win( azimute_config_AT, [495, 330], [470, 25 ] )
         ajust_win( zenite_config_AT , [495, 330], [970, 25 ] )
         ajust_win( draw_tracker_AT  , [995, 480], [470, 360] )
-        count = 0
+
+
+setup_viewport()
+screen_dimension = [ GetSystemMetrics(0), GetSystemMetrics(1) ] 
+set_viewport_title( title = 'Controle dos motores - Unic' )
+set_viewport_pos( [55,0] )
+set_viewport_width(  screen_dimension[0] )
+set_viewport_height( screen_dimension[1] )
+
+set_primary_window( main_window, True )
+change_menu(None, None, 'Atuadores' )
+
+while is_dearpygui_running():
+    render_dearpygui_frame()
+    if window_opened == 'Atuadores':
+        render_atuador() 
