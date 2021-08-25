@@ -1,6 +1,8 @@
 from dearpygui.dearpygui import *
+
 from utils.serial_reader import serialPorts 
 from utils.Model         import SunPosition
+
 from win32api            import GetSystemMetrics
 from serial              import Serial
 from struct              import unpack
@@ -55,8 +57,6 @@ UTC_HOUR  = -3
 sun_data  = SunPosition( LATITUDE, LONGITUDE, ALTITUDE )
 sun_data.update_date()
 
-
-
 def change_menu(sender, app_data, user_data ):
     global window_opened 
     window_opened = user_data 
@@ -102,8 +102,6 @@ def add_image_loaded( img_path ):
     w, h, c, d = load_image( img_path )
     with texture_registry() as reg_id : 
         return add_static_texture( w, h, d, parent = reg_id )
-
-
 
 # FUNÇÕES
 def draw_sun_trajetory( draw_id, parent_id, all_day = False, extremes = False ):

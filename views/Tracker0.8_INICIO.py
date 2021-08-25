@@ -1,6 +1,8 @@
 from dearpygui.dearpygui import *
+
 from utils.serial_reader import serialPorts 
 from utils.Model         import SunPosition
+
 from win32api            import GetSystemMetrics
 from serial              import Serial
 from struct              import unpack
@@ -43,7 +45,6 @@ windows = {
 
 window_opened = ''
 
-
 def add_image_loaded( img_path ):
     w, h, c, d = load_image( img_path )
     with texture_registry() as reg_id : 
@@ -69,7 +70,6 @@ def ajust_win( obj, o_wh : list, o_pos : list) -> list :
     set_item_height( obj, ch*o_wh[1] ) 
     set_item_pos(    obj, [ cw*o_pos[0], ch*o_pos[1] ] ) 
 
-
 with theme( default_theme = True ) as theme_id:
     add_theme_color( mvThemeCol_Button       , (255, 140, 23), category = mvThemeCat_Core )
     add_theme_style( mvStyleVar_FrameRounding,        5      , category = mvThemeCat_Core )
@@ -89,7 +89,6 @@ with window( label = 'Main Window', id = 1_0, autosize = True ) as main_window:
         add_menu_item( label="Atuação da elevação", callback = change_menu, user_data = "Atuação da elevação" )
         add_menu_item( label="Configurações"      , callback = change_menu, user_data = "Configurações"       )
         add_menu_item( label='Sair'               , callback = change_menu, user_data = 'Sair'                )
-
 
 def render_inicio():
     w , h = get_item_width( 1_0 ), get_item_height( 1_0 )
@@ -160,7 +159,6 @@ def init_inicio():
     set_item_theme(1_1, "theme_SemBorda")
     set_item_theme(1_2, "theme_SemBorda")
     set_item_theme(1_3, "theme_SemBorda")
-
 
 screen_dimension = [ GetSystemMetrics(0), GetSystemMetrics(1) ] 
 
