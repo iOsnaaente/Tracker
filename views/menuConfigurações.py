@@ -1,189 +1,108 @@
 from dearpygui.dearpygui import *
 
-from utils.serial_reader import serialPorts 
-from utils.Model         import SunPosition
-
 from win32api            import GetSystemMetrics
-from serial              import Serial
-from struct              import unpack
 
-import datetime as dt 
-import ephem
-import math 
 import sys 
 import os 
 
 
-map_val = lambda value, in_min, in_max, out_min, out_max : ((value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min ) 
-cos     = lambda x : math.cos( x )
-sin     = lambda x : math.sin( x )
-tg      = lambda x : math.tan( x )
+def att_theme_style( sender, data, user ):
+    with theme( default_theme = True ) as theme_style_id: 
+        # Windows 
+        add_theme_style( mvStyleVar_WindowBorderSize   , get_value(7_1_1) )
+        add_theme_style( mvStyleVar_WindowMinSize      , get_value(7_1_2) )
+        add_theme_style( mvStyleVar_WindowPadding      , x = get_value(7_1_3)[0] , y = get_value(7_1_3)[1] )
+        add_theme_style( mvStyleVar_WindowTitleAlign   , x = get_value(7_1_4)[0] , y = get_value(7_1_4)[1] )
+        add_theme_style( mvStyleVar_WindowRounding     , x = get_value(7_1_5)[0] , y = get_value(7_1_5)[1] )
 
-PATH = os.path.dirname( __file__ )
+        # Childs    
+        add_theme_style( mvStyleVar_ChildBorderSize    , get_value( 7_1_6 ) )
+        add_theme_style( mvStyleVar_ChildRounding      , get_value( 7_1_7 ) )
 
+        # PopUp
+        add_theme_style( mvStyleVar_PopupBorderSize    , get_value( 7_1_8 ) )
+        add_theme_style( mvStyleVar_PopupRounding      , get_value( 7_1_9 ) )
 
-color = {
-    "black"   : lambda alfa : [   0,   0,   0, alfa ],
-    "red"     : lambda alfa : [ 255,   0,   0, alfa ],
-    "yellow"  : lambda alfa : [ 255, 255,   0, alfa ],
-    "green"   : lambda alfa : [   0, 255,   0, alfa ],
-    "ciano"   : lambda alfa : [   0, 255, 255, alfa ],
-    "blue"    : lambda alfa : [   0,   0, 255, alfa ],
-    "magenta" : lambda alfa : [ 255,   0, 255, alfa ],
-    "white"   : lambda alfa : [ 255, 255, 255, alfa ],
-    'gray'    : lambda alfa : [ 155, 155, 155, alfa ],
-    'orange'  : lambda alfa : [ 255,  69,   0, alfa ],}
+        # Frames 
+        add_theme_style( mvStyleVar_FrameBorderSize    , get_value( 7_1_10 ) )
+        add_theme_style( mvStyleVar_FramePadding       , x = get_value(7_1_11)[0] , y = get_value(7_1_11)[1] )
+        add_theme_style( mvStyleVar_FrameRounding      , get_value( 7_1_12 ) )
 
-windows = {
-            "Inicio"             : [  ],
-            "Visualização geral" : [  ],
-            "Posição do sol"     : [  ],
-            "Atuadores"          : [  ],
-            "Atuação da base"    : [  ],
-            "Atuação da elevação": [  ],
-            "Configurações"      : [  ],
-            'Sair'               : [  ],
-            }
+        # Items 
+        add_theme_style( mvStyleVar_ItemSpacing        , x = get_value(7_1_13)[0] , y = get_value(7_1_13)[1] )
+        add_theme_style( mvStyleVar_ItemInnerSpacing   , x = get_value(7_1_14)[0] , y = get_value(7_1_14)[1] )
 
-window_opened = ''
+        # Scroll
+        add_theme_style( mvStyleVar_ScrollbarSize      , get_value( 7_1_15 ) )
+        add_theme_style( mvStyleVar_ScrollbarRounding  , get_value( 7_1_16 ) )
 
-def change_menu(sender, app_data, user_data ):
-    global window_opened 
-    window_opened = user_data 
-    # CLOSE ALL WINDOWS 
-    for k in windows.keys():
-        for i in windows[k]:
-            hide_item(i)
-    # OPEN THE RIGHT TAB WINDOW 
-    to_open = windows[user_data]
-    for i in to_open:
-        show_item(i)
+        # Cell \ Indent \ Grab \ Button 
+        add_theme_style( mvStyleVar_CellPadding        , x = get_value(7_1_17)[0] , y = get_value(7_1_17)[1] )
+        add_theme_style( mvStyleVar_IndentSpacing      , get_value( 7_1_18 ) )
+        add_theme_style( mvStyleVar_GrabMinSize        , get_value( 7_1_19 ) )
+        add_theme_style( mvStyleVar_GrabRounding       , get_value( 7_1_20 ) )
+        add_theme_style( mvStyleVar_ButtonTextAlign    , x = get_value(7_1_21)[0] , y = get_value(7_1_21)[1] )
+        add_theme_style( mvStyleVar_SelectableTextAlign, x = get_value(7_1_22)[0] , y = get_value(7_1_22)[1] )
+    
+def att_theme_color( sender, data, user ):
+    with theme( default_theme = True ) as theme_color_id:
+        add_theme_color( mvThemeCol_Text                   , get_value( 7_2_22 ) ) 
+        add_theme_color( mvThemeCol_TextDisabled           , get_value( 7_2_23 ) ) 
+        add_theme_color( mvThemeCol_WindowBg               , get_value( 7_2_24 ) ) 
+        add_theme_color( mvThemeCol_ChildBg                , get_value( 7_2_25 ) ) 
+        add_theme_color( mvThemeCol_PopupBg                , get_value( 7_2_26 ) ) 
+        add_theme_color( mvThemeCol_Border                 , get_value( 7_2_27 ) ) 
+        add_theme_color( mvThemeCol_BorderShadow           , get_value( 7_2_28 ) ) 
+        add_theme_color( mvThemeCol_FrameBg                , get_value( 7_2_29 ) ) 
+        add_theme_color( mvThemeCol_FrameBgHovered         , get_value( 7_2_30 ) ) 
+        add_theme_color( mvThemeCol_FrameBgActive          , get_value( 7_2_31 ) ) 
+        add_theme_color( mvThemeCol_TitleBg                , get_value(77_2_32 ) ) 
+        add_theme_color( mvThemeCol_TitleBgActive          , get_value(77_2_33 ) ) 
+        add_theme_color( mvThemeCol_TitleBgCollapsed       , get_value(77_2_34 ) ) 
+        add_theme_color( mvThemeCol_MenuBarBg              , get_value(77_2_35 ) ) 
+        add_theme_color( mvThemeCol_ScrollbarBg            , get_value(77_2_36 ) ) 
+        add_theme_color( mvThemeCol_ScrollbarGrab          , get_value(77_2_37 ) ) 
+        add_theme_color( mvThemeCol_ScrollbarGrabHovered   , get_value(77_2_38 ) ) 
+        add_theme_color( mvThemeCol_ScrollbarGrabActive    , get_value(77_2_39 ) ) 
+        add_theme_color( mvThemeCol_CheckMark              , get_value(77_2_40 ) ) 
+        add_theme_color( mvThemeCol_SliderGrab             , get_value(77_2_41 ) ) 
+        add_theme_color( mvThemeCol_SliderGrabActive       , get_value(77_2_42 ) ) 
+        add_theme_color( mvThemeCol_Button                 , get_value(77_2_43 ) ) 
+        add_theme_color( mvThemeCol_ButtonHovered          , get_value(77_2_44 ) ) 
+        add_theme_color( mvThemeCol_ButtonActive           , get_value(77_2_45 ) ) 
+        add_theme_color( mvThemeCol_Header                 , get_value(77_2_46 ) ) 
+        add_theme_color( mvThemeCol_HeaderHovered          , get_value(77_2_47 ) ) 
+        add_theme_color( mvThemeCol_HeaderActive           , get_value(77_2_48 ) ) 
+        add_theme_color( mvThemeCol_Separator              , get_value(77_2_49 ) ) 
+        add_theme_color( mvThemeCol_SeparatorHovered       , get_value(77_2_50 ) ) 
+        add_theme_color( mvThemeCol_SeparatorActive        , get_value(77_2_51 ) ) 
+        add_theme_color( mvThemeCol_ResizeGrip             , get_value(77_2_52 ) ) 
+        add_theme_color( mvThemeCol_ResizeGripHovered      , get_value(77_2_53 ) ) 
+        add_theme_color( mvThemeCol_ResizeGripActive       , get_value(77_2_54 ) ) 
+        add_theme_color( mvThemeCol_Tab                    , get_value(77_2_55 ) ) 
+        add_theme_color( mvThemeCol_TabHovered             , get_value(77_2_56 ) ) 
+        add_theme_color( mvThemeCol_TabActive              , get_value(77_2_57 ) ) 
+        add_theme_color( mvThemeCol_TabUnfocused           , get_value(77_2_58 ) ) 
+        add_theme_color( mvThemeCol_TabUnfocusedActive     , get_value(77_2_59 ) ) 
+        add_theme_color( mvThemeCol_DockingPreview         , get_value(77_2_60 ) ) 
+        add_theme_color( mvThemeCol_DockingEmptyBg         , get_value(77_2_61 ) ) 
+        add_theme_color( mvThemeCol_PlotLines              , get_value(77_2_62 ) ) 
+        add_theme_color( mvThemeCol_PlotLinesHovered       , get_value(77_2_63 ) ) 
+        add_theme_color( mvThemeCol_PlotHistogram          , get_value(77_2_64 ) ) 
+        add_theme_color( mvThemeCol_PlotHistogramHovered   , get_value(77_2_65 ) ) 
+        add_theme_color( mvThemeCol_TableHeaderBg          , get_value(77_2_66 ) ) 
+        add_theme_color( mvThemeCol_TableBorderStrong      , get_value(77_2_67 ) ) 
+        add_theme_color( mvThemeCol_TableBorderLight       , get_value(77_2_68 ) ) 
+        add_theme_color( mvThemeCol_TableRowBg             , get_value(77_2_69 ) ) 
+        add_theme_color( mvThemeCol_TableRowBgAlt          , get_value(77_2_70 ) ) 
+        add_theme_color( mvThemeCol_TextSelectedBg         , get_value(77_2_71 ) ) 
+        add_theme_color( mvThemeCol_DragDropTarget         , get_value(77_2_72 ) ) 
+        add_theme_color( mvThemeCol_NavHighlight           , get_value(77_2_73 ) ) 
+        add_theme_color( mvThemeCol_NavWindowingHighlight  , get_value(77_2_74 ) ) 
+        add_theme_color( mvThemeCol_NavWindowingDimBg      , get_value(77_2_75 ) ) 
+        add_theme_color( mvThemeCol_ModalWindowDimBg       , get_value(77_2_76 ) ) 
 
-def ajust_win( obj, o_wh : list, o_pos : list) -> list :    
-    cw = get_item_width( main_window ) / 1474
-    ch = get_item_height( main_window )/ 841 
-
-    set_item_width(  obj, cw*o_wh[0] ) 
-    set_item_height( obj, ch*o_wh[1] ) 
-    set_item_pos(    obj, [ cw*o_pos[0], ch*o_pos[1] ] ) 
-
-# FUNÇÕES
-def add_image_loaded( img_path ):
-    w, h, c, d = load_image( img_path )
-    with texture_registry() as reg_id : 
-        return add_static_texture( w, h, d, parent = reg_id )
-
-# Main Window 
-with window( label = 'Main Window', id = 1_0, autosize = True ) as main_window:
-    with menu_bar(label = "MenuBar"):
-        add_menu_item( label="Inicio"             , callback = change_menu, user_data = "Inicio"              )
-        add_menu_item( label="Visualização geral" , callback = change_menu, user_data = "Visualização geral"  )
-        add_menu_item( label="Posição do sol"     , callback = change_menu, user_data = "Posição do sol"      )
-        add_menu_item( label="Atuadores"          , callback = change_menu, user_data = "Atuadores"           )
-        add_menu_item( label="Atuação da base"    , callback = change_menu, user_data = "Atuação da base"     )
-        add_menu_item( label="Atuação da elevação", callback = change_menu, user_data = "Atuação da elevação" )
-        add_menu_item( label="Configurações"      , callback = change_menu, user_data = "Configurações"       )
-        add_menu_item( label='Sair'               , callback = change_menu, user_data = 'Sair'                )
-
-def init_configuracoes(): 
-
-    def att_theme_style( sender, data, user ):
-        with theme( default_theme = True ) as theme_style_id: 
-            # Windows 
-            add_theme_style( mvStyleVar_WindowBorderSize   , get_value(7_1_1) )
-            add_theme_style( mvStyleVar_WindowMinSize      , get_value(7_1_2) )
-            add_theme_style( mvStyleVar_WindowPadding      , x = get_value(7_1_3)[0] , y = get_value(7_1_3)[1] )
-            add_theme_style( mvStyleVar_WindowTitleAlign   , x = get_value(7_1_4)[0] , y = get_value(7_1_4)[1] )
-            add_theme_style( mvStyleVar_WindowRounding     , x = get_value(7_1_5)[0] , y = get_value(7_1_5)[1] )
-
-            # Childs    
-            add_theme_style( mvStyleVar_ChildBorderSize    , get_value( 7_1_6 ) )
-            add_theme_style( mvStyleVar_ChildRounding      , get_value( 7_1_7 ) )
-
-            # PopUp
-            add_theme_style( mvStyleVar_PopupBorderSize    , get_value( 7_1_8 ) )
-            add_theme_style( mvStyleVar_PopupRounding      , get_value( 7_1_9 ) )
-
-            # Frames 
-            add_theme_style( mvStyleVar_FrameBorderSize    , get_value( 7_1_10 ) )
-            add_theme_style( mvStyleVar_FramePadding       , x = get_value(7_1_11)[0] , y = get_value(7_1_11)[1] )
-            add_theme_style( mvStyleVar_FrameRounding      , get_value( 7_1_12 ) )
-
-            # Items 
-            add_theme_style( mvStyleVar_ItemSpacing        , x = get_value(7_1_13)[0] , y = get_value(7_1_13)[1] )
-            add_theme_style( mvStyleVar_ItemInnerSpacing   , x = get_value(7_1_14)[0] , y = get_value(7_1_14)[1] )
-
-            # Scroll
-            add_theme_style( mvStyleVar_ScrollbarSize      , get_value( 7_1_15 ) )
-            add_theme_style( mvStyleVar_ScrollbarRounding  , get_value( 7_1_16 ) )
-
-            # Cell \ Indent \ Grab \ Button 
-            add_theme_style( mvStyleVar_CellPadding        , x = get_value(7_1_17)[0] , y = get_value(7_1_17)[1] )
-            add_theme_style( mvStyleVar_IndentSpacing      , get_value( 7_1_18 ) )
-            add_theme_style( mvStyleVar_GrabMinSize        , get_value( 7_1_19 ) )
-            add_theme_style( mvStyleVar_GrabRounding       , get_value( 7_1_20 ) )
-            add_theme_style( mvStyleVar_ButtonTextAlign    , x = get_value(7_1_21)[0] , y = get_value(7_1_21)[1] )
-            add_theme_style( mvStyleVar_SelectableTextAlign, x = get_value(7_1_22)[0] , y = get_value(7_1_22)[1] )
-        
-    def att_theme_color():
-        with theme( default_theme = True ) as theme_color_id:
-            
-            add_theme_color( mvThemeCol_Text                   , get_value( 7_2_22 ) ) 
-            add_theme_color( mvThemeCol_TextDisabled           , get_value( 7_2_23 ) ) 
-            add_theme_color( mvThemeCol_WindowBg               , get_value( 7_2_24 ) ) 
-            add_theme_color( mvThemeCol_ChildBg                , get_value( 7_2_25 ) ) 
-            add_theme_color( mvThemeCol_PopupBg                , get_value( 7_2_26 ) ) 
-            add_theme_color( mvThemeCol_Border                 , get_value( 7_2_27 ) ) 
-            add_theme_color( mvThemeCol_BorderShadow           , get_value( 7_2_28 ) ) 
-            add_theme_color( mvThemeCol_FrameBg                , get_value( 7_2_29 ) ) 
-            add_theme_color( mvThemeCol_FrameBgHovered         , get_value( 7_2_30 ) ) 
-            add_theme_color( mvThemeCol_FrameBgActive          , get_value( 7_2_31 ) ) 
-            add_theme_color( mvThemeCol_TitleBg                , get_value(77_2_32 ) ) 
-            add_theme_color( mvThemeCol_TitleBgActive          , get_value(77_2_33 ) ) 
-            add_theme_color( mvThemeCol_TitleBgCollapsed       , get_value(77_2_34 ) ) 
-            add_theme_color( mvThemeCol_MenuBarBg              , get_value(77_2_35 ) ) 
-            add_theme_color( mvThemeCol_ScrollbarBg            , get_value(77_2_36 ) ) 
-            add_theme_color( mvThemeCol_ScrollbarGrab          , get_value(77_2_37 ) ) 
-            add_theme_color( mvThemeCol_ScrollbarGrabHovered   , get_value(77_2_38 ) ) 
-            add_theme_color( mvThemeCol_ScrollbarGrabActive    , get_value(77_2_39 ) ) 
-            add_theme_color( mvThemeCol_CheckMark              , get_value(77_2_40 ) ) 
-            add_theme_color( mvThemeCol_SliderGrab             , get_value(77_2_41 ) ) 
-            add_theme_color( mvThemeCol_SliderGrabActive       , get_value(77_2_42 ) ) 
-            add_theme_color( mvThemeCol_Button                 , get_value(77_2_43 ) ) 
-            add_theme_color( mvThemeCol_ButtonHovered          , get_value(77_2_44 ) ) 
-            add_theme_color( mvThemeCol_ButtonActive           , get_value(77_2_45 ) ) 
-            add_theme_color( mvThemeCol_Header                 , get_value(77_2_46 ) ) 
-            add_theme_color( mvThemeCol_HeaderHovered          , get_value(77_2_47 ) ) 
-            add_theme_color( mvThemeCol_HeaderActive           , get_value(77_2_48 ) ) 
-            add_theme_color( mvThemeCol_Separator              , get_value(77_2_49 ) ) 
-            add_theme_color( mvThemeCol_SeparatorHovered       , get_value(77_2_50 ) ) 
-            add_theme_color( mvThemeCol_SeparatorActive        , get_value(77_2_51 ) ) 
-            add_theme_color( mvThemeCol_ResizeGrip             , get_value(77_2_52 ) ) 
-            add_theme_color( mvThemeCol_ResizeGripHovered      , get_value(77_2_53 ) ) 
-            add_theme_color( mvThemeCol_ResizeGripActive       , get_value(77_2_54 ) ) 
-            add_theme_color( mvThemeCol_Tab                    , get_value(77_2_55 ) ) 
-            add_theme_color( mvThemeCol_TabHovered             , get_value(77_2_56 ) ) 
-            add_theme_color( mvThemeCol_TabActive              , get_value(77_2_57 ) ) 
-            add_theme_color( mvThemeCol_TabUnfocused           , get_value(77_2_58 ) ) 
-            add_theme_color( mvThemeCol_TabUnfocusedActive     , get_value(77_2_59 ) ) 
-            add_theme_color( mvThemeCol_DockingPreview         , get_value(77_2_60 ) ) 
-            add_theme_color( mvThemeCol_DockingEmptyBg         , get_value(77_2_61 ) ) 
-            add_theme_color( mvThemeCol_PlotLines              , get_value(77_2_62 ) ) 
-            add_theme_color( mvThemeCol_PlotLinesHovered       , get_value(77_2_63 ) ) 
-            add_theme_color( mvThemeCol_PlotHistogram          , get_value(77_2_64 ) ) 
-            add_theme_color( mvThemeCol_PlotHistogramHovered   , get_value(77_2_65 ) ) 
-            add_theme_color( mvThemeCol_TableHeaderBg          , get_value(77_2_66 ) ) 
-            add_theme_color( mvThemeCol_TableBorderStrong      , get_value(77_2_67 ) ) 
-            add_theme_color( mvThemeCol_TableBorderLight       , get_value(77_2_68 ) ) 
-            add_theme_color( mvThemeCol_TableRowBg             , get_value(77_2_69 ) ) 
-            add_theme_color( mvThemeCol_TableRowBgAlt          , get_value(77_2_70 ) ) 
-            add_theme_color( mvThemeCol_TextSelectedBg         , get_value(77_2_71 ) ) 
-            add_theme_color( mvThemeCol_DragDropTarget         , get_value(77_2_72 ) ) 
-            add_theme_color( mvThemeCol_NavHighlight           , get_value(77_2_73 ) ) 
-            add_theme_color( mvThemeCol_NavWindowingHighlight  , get_value(77_2_74 ) ) 
-            add_theme_color( mvThemeCol_NavWindowingDimBg      , get_value(77_2_75 ) ) 
-            add_theme_color( mvThemeCol_ModalWindowDimBg       , get_value(77_2_76 ) ) 
-        return theme_id
+def init_configuracoes( windows : dict ): 
 
     with window( label = 'Configurações_Estilo'  , id = 7_1_0, pos = [50,50], width = 500, height = 500, no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ) as style_CONFG:
         windows['Configurações'].append( style_CONFG )
@@ -322,29 +241,9 @@ def init_configuracoes():
         add_text( 'Um exemplo de color picker', bullet = True  ) 
         add_color_picker() 
 
+# ATUALIZAR AS CORES PADRÃO E FAZER O BOTÃO DE SALVAR AS CONFIGURAÇÕES
 def render_configuracao():
     w, h = get_item_width( 1_0 ), get_item_height( 1_0 ) 
     configure_item( 7_1_0, pos = [ 10            , 25 ], width = (w*(1/3))//1, height = (h*0.965)//1 ) 
     configure_item( 7_2_0, pos = [ w*(1/3)   + 10, 25 ], width = (w*(7/15)-5 )//1, height = (h*0.965)//1 ) 
     configure_item( 7_3_0, pos = [ w*(12/15) + 5 , 25 ], width = (w*(3/15)-10)//1, height = (h*0.965)//1 ) 
-
-
-setup_viewport()
-screen_dimension = [ GetSystemMetrics(0), GetSystemMetrics(1) ] 
-
-init_configuracoes() 
-
-set_viewport_title( title = 'Configurações' )
-set_viewport_pos( [55,0] )
-set_viewport_width(  screen_dimension[0] )
-set_viewport_height( screen_dimension[1] )
-
-set_primary_window( main_window, True )
-change_menu(None, None, 'Configurações' )
-
-count = 0
-while is_dearpygui_running():
-    render_dearpygui_frame()
-
-    if window_opened == 'Configurações':
-        render_configuracao() 

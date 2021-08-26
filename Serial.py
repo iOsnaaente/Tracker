@@ -28,6 +28,7 @@ def receive_msg( comp : Serial ):
                 except:
                     print( line )
                     return None 
+
 while True:   
     sleep( 0.1 )
     DATA = receive_msg( comp )  

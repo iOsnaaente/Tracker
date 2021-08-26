@@ -63,13 +63,13 @@ sun_angle_azimute     = 2
 motor_angle_base      = 3
 motor_angle_elevation = 4 
 
-resolucaoM1 = 0 
-passosM1    = 0 
-uPassosM1   = 0 
+resolucaoM1           = 0 
+passosM1              = 0 
+uPassosM1             = 0 
 
-resolucaoM2 = 0 
-passosM2    = 0 
-uPassosM2   = 0
+resolucaoM2           = 0 
+passosM2              = 0 
+uPassosM2             = 0
 
 window_opened = ''
 
@@ -80,7 +80,6 @@ num_wind = 1
 port_list = [] 
 
 color_maps2plot = ["Default", "Dark", "Pastel", "Paired", "Viridis", "Plasma", "Hot", "Cool", "Pink", "Jet"]
-
 
 # Configurações padrão 
 w, h = 350, 225 
@@ -457,6 +456,7 @@ def update_values( dic : dict ):
 ## DESCOMENTAR A CONEXÃO SERIAL
 CONNECTED = False
 comport = 0 
+
 def initComport(sender, data):
     global comport
     port     = get_value('PORT##AT')
@@ -722,8 +722,6 @@ with window('Visualização##AT'    , no_move = True, no_resize = True, no_colla
     #add_plot
     add_input_text('ComportReader##AT', label= '' ) 
 
-
-
 # JANELA DE ATUAÇÃO DO MOTOR DE GIRO 
 with window('Visualização##MG'    , no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar = True):
     pass
@@ -766,8 +764,6 @@ with window('log##ME'             , no_move = True, no_resize = True, no_collaps
         add_text('Rotação saída:') 
         add_input_float('RPM_OUT_M2##ME', default_value= 0, format= '%10.2f', label= '', callback= lambda sender, data : set_value('RPM_M2##ME', value= (get_value('RPM_OUT_M2##ME')*get_value('REDU_M2##ME')[1]/get_value('REDU_M2##ME')[0]) ) )
         add_spacing( count= 1 )
-
-
 
 
 def update_config():
