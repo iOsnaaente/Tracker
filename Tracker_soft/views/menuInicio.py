@@ -1,11 +1,5 @@
 from dearpygui.dearpygui import *
-
-from win32api            import GetSystemMetrics
-from utils.Model         import SunPosition
-import math 
 import os 
-
-
 
 PATH      = os.path.dirname( __file__ )
 PATH_IMG  = PATH + '\\utils\\img\\'
@@ -53,6 +47,8 @@ def render_inicio    ( ):
     configure_item( 1_2_6, width = w//3 - 15, height = v_spacing )  
 
 def init_inicio      ( windows :dict, callback ): 
+    with theme( id = 'no_win_border'):
+        add_theme_style( mvStyleVar_WindowBorderSize, 0 , category = mvThemeCat_Core )
 
     with window( label = 'Header' , id = 1_1, pos = [10, 25], no_move= True, no_close= True, no_title_bar= True, no_resize= True ) as Header_IN:    
         windows['Inicio'].append( Header_IN )
@@ -72,7 +68,6 @@ def init_inicio      ( windows :dict, callback ):
         add_button(  label = "Configurações"      , id = 1_2_6, arrow  = False, callback = callback, user_data   = 'Configurações'       )
     with window(     label = 'Main'               , id = 1_3  , no_move= True , no_close = True       , no_title_bar= True, no_resize= True) as Main_IN:
         windows['Inicio'].append( Main_IN )
-
         add_text( 'HOVER SOME ITEM AT THE LEFT SIDE...', id = 1_3_1)
         add_hover_handler( parent = 1_2_1, callback = hover_buttons_IN, user_data = "Visualização geral"  )
         add_hover_handler( parent = 1_2_2, callback = hover_buttons_IN, user_data = "Posição do sol"      )
@@ -81,7 +76,7 @@ def init_inicio      ( windows :dict, callback ):
         add_hover_handler( parent = 1_2_5, callback = hover_buttons_IN, user_data = "Atuação da elevação" )
         add_hover_handler( parent = 1_2_6, callback = hover_buttons_IN, user_data = "Configurações"       )
 
-    set_item_theme(1_1, "theme_SemBorda")
-    set_item_theme(1_2, "theme_SemBorda")
-    set_item_theme(1_3, "theme_SemBorda")
+    set_item_theme(1_1, 'no_win_border')
+    set_item_theme(1_2, 'no_win_border')
+    set_item_theme(1_3, 'no_win_border')
 

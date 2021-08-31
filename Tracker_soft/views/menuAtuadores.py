@@ -1,7 +1,6 @@
 from dearpygui.dearpygui import *
 from utils.serial_reader import serialPorts 
 from utils.Model         import SunPosition
-from win32api            import GetSystemMetrics
 from serial              import Serial
 from struct              import unpack
 
@@ -65,33 +64,12 @@ def add_image_loaded( img_path ):
     with texture_registry() as reg_id : 
         return add_static_texture( w, h, d, parent = reg_id )
 
-def change_menu(sender, app_data, user_data ):
-    global window_opened 
-    window_opened = user_data 
-    # CLOSE ALL WINDOWS 
-    for k in windows.keys():
-        for i in windows[k]:
-            hide_item(i)
-    # OPEN THE RIGHT TAB WINDOW 
-    to_open = windows[user_data]
-    for i in to_open:
-        show_item(i)
-
 def get_nBytes( comp : Serial ): 
     if comp.isOpen():
         return comp.inWaiting()  
     else:
         print( 'COMP fechada ')
-
-def send_msg(   comp : Serial, msg : str ):
-    for s in msg:
-        comp.write( s.encode() ) 
-
-def att_comData(comp : Serial ):
-    DATA = receive_msg( comp )
-    if DATA : 
-        return DATA  
-
+        
 def att_CMD_Pico( COMP : Serial ):
     global CONNECTED
     global buff_count
@@ -164,7 +142,7 @@ def att_Serial_Pico( COMP : Serial ):
                         r    = (w/2)*1.25 if w < h else (h/2)*1.25 
                         configure_item( 44_1_9, p1 =  [w + r*cos(math.radians(MGSR_Angle)+math.pi*3/2), h + r*sin( math.radians(MGSR_Angle)+math.pi*3/2)]  )
                     
-                        w, h = get_item_width(zenite_config_AT), get_item_height(zenite_config_AT)
+                        w, h = get_item_width(45_0), get_item_height(45_0)
                         r    = w//1.3 if w < h else h//1.3
                         show_item( 45_1_7 )
                         configure_item( 45_1_7, p1 = [ 100 + r*cos(math.radians(MESR_Angle)), 10+r*(1-sin(math.radians(MESR_Angle)))])
@@ -396,20 +374,19 @@ def init_atuador( windows : dict ):
 def render_atuador() : 
     att_Serial_Pico( COMP )
     att_CMD_Pico( COMP )
-    if not get_frame_count() % 30:
-        cw, ch = get_item_width( 1_0 ) / 1474, get_item_height( 1_0 )/ 841 
-        configure_item( 42_0, width = cw*455, height = ch*330, pos = [cw*10 , ch*25 ] ) #[455, 330] -> Serial
-        configure_item( 43_0, width = cw*455, height = ch*480, pos = [cw*10 , ch*360] ) #[455, 480] -> Motores
-        configure_item( 44_0, width = cw*495, height = ch*330, pos = [cw*470, ch*25 ] ) #[495, 330] -> Azimue
-        configure_item( 45_0, width = cw*495, height = ch*330, pos = [cw*970, ch*25 ] ) #[495, 330] -> Zenite 
-        configure_item( 46_0, width = cw*995, height = ch*480, pos = [cw*470, ch*360] ) #[995, 480] -> Draw 
-        
-        DAY_2Compute = get_value( 42_5_1 )
-        MG_Resolucao = get_value( 43_1_1 ) 
-        MG_Steps     = get_value( 43_1_2 ) 
-        MG_uStep     = get_value( 43_1_3 ) 
-        ME_Resolucao = get_value( 43_2_1 ) 
-        ME_Step      = get_value( 43_2_2 ) 
-        ME_uStep     = get_value( 43_2_3 ) 
-        MG_Angle     = get_value( 44_1   ) 
-        ME_Angle     = get_value( 45_1   )
+    cw, ch = get_item_width( 1_0 ) / 1474, get_item_height( 1_0 )/ 841 
+    configure_item( 4_2_0, width = cw*455, height = ch*330, pos = [cw*10 , ch*25 ] ) #[455, 330] -> Serial
+    configure_item( 4_3_0, width = cw*455, height = ch*480, pos = [cw*10 , ch*360] ) #[455, 480] -> Motores
+    configure_item( 4_4_0, width = cw*495, height = ch*330, pos = [cw*470, ch*25 ] ) #[495, 330] -> Azimue
+    configure_item( 4_5_0, width = cw*495, height = ch*330, pos = [cw*970, ch*25 ] ) #[495, 330] -> Zenite 
+    configure_item( 4_6_0, width = cw*995, height = ch*480, pos = [cw*470, ch*360] ) #[995, 480] -> Draw 
+    
+    DAY_2Compute = get_value( 42_5_1 )
+    MG_Resolucao = get_value( 43_1_1 ) 
+    MG_Steps     = get_value( 43_1_2 ) 
+    MG_uStep     = get_value( 43_1_3 ) 
+    ME_Resolucao = get_value( 43_2_1 ) 
+    ME_Step      = get_value( 43_2_2 ) 
+    ME_uStep     = get_value( 43_2_3 ) 
+    MG_Angle     = get_value( 44_1   ) 
+    ME_Angle     = get_value( 45_1   )
