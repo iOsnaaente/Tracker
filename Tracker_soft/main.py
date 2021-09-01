@@ -14,7 +14,7 @@ import os
 
 from views.menuInicio            import *
 from views.menuVisualizaçãoGeral import *
-from views.menuPosicaoDoSol      import *
+#from views.menuPosicaoDoSol      import *
 from views.menuAtuadores         import * 
 from views.menuConfigurações     import * 
 
@@ -128,7 +128,7 @@ set_primary_window    ( main_window, True    )
 
 init_inicio           ( windows, change_menu )
 init_visualizacaoGeral( windows              ) 
-init_posicaoDoSol     ( windows              )
+#init_posicaoDoSol     ( windows              )
 init_atuador          ( windows              ) 
 
 init_configuracoes    ( windows              ) 
