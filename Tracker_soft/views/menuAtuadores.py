@@ -59,6 +59,8 @@ buff_bytes    = b''
 BUFF_MAX      = 30 
 buff_count    = 0
 
+
+
 def add_image_loaded( img_path ):
     w, h, c, d = load_image( img_path )
     with texture_registry() as reg_id : 
@@ -69,7 +71,7 @@ def get_nBytes( comp : Serial ):
         return comp.inWaiting()  
     else:
         print( 'COMP fechada ')
-        
+
 def att_CMD_Pico( COMP : Serial ):
     global CONNECTED
     global buff_count
@@ -147,7 +149,6 @@ def att_Serial_Pico( COMP : Serial ):
                         show_item( 45_1_7 )
                         configure_item( 45_1_7, p1 = [ 100 + r*cos(math.radians(MESR_Angle)), 10+r*(1-sin(math.radians(MESR_Angle)))])
                         
-
                     except:
                         pass 
     else: 
