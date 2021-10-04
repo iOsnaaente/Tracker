@@ -7,6 +7,15 @@ R2H    = 3.81971863420548805845    # Radians to hours conversion factor
 TWO_PI = 6.28318530717958647693
 PI     = 3.14159265358979323846
 
+'''
+A função compute faz os calculos necessários para encontrar a posição do sol dados os parametros ::
+    >>> Location : list[4] -> Dados de localização ( Latitude : Longitude : Temperatura : Pressão ) [Temperatura e pressão são usados para refração, podem ser passados como nulos]
+    >>> Time : list[6] -> Dados de data ( Ano AA / Mês MM / Dia DD - Hora HH : Minuto Mi : Segundo SS -- UTC = 3 para horário de Brasilia )
+    >>> useDegrees : bool = True -> Saída dos dados em Graus ao invés de Radianos 
+    >>> useNorthEqualsZero : bool = True -> Saída dos dados com o Norte como 0º de Azimute 
+    >>> computeRefrEquatorial : bool = False -> Calcular a refração dadas a temperatura e pressão do local ( Se True deve ser passado Temperatura e pressão em Location[2:3])
+    >>> computeDistance : bool = False -> Sem utilidade por enquanto 
+'''
 def compute(Location : list, Time : list, useDegrees : bool = True, useNorthEqualsZero : bool = True, computeRefrEquatorial : bool = False, computeDistance : bool = False):
     # descompactação da lista Time 
     Tyear   = Time[0] + 2000 
@@ -141,4 +150,24 @@ def computeJulianDay( year, month, day, hour, minute, second ):
     dDay = day + hour/24.0 + minute/1440.0 + second/86400.0
     JD   = floor(365.250*(year-2000)) - 50.5 + floor(30.60010*(month+1)) + dDay + tmp2
     return JD 
+
+
+def get_twilights( Location : list, Time : list) -> list :
+    Time[3:-1] = 0,0,0  
+    rising = [] 
+    sunset = []
+    while True: 
+        azi_alt  = compute( Location, Time, useNorthEqualsZero= False  )
+        if azi_alt[1] > 0 :
+            sunset = [ t for t in Time ] 
+            if rising == []:
+                rising = [ t for t in Time ]
+                
+        Time[4] += 1
+        if Time[4] >= 60: 
+            Time[4] = 0
+            Time[3] += 1 
+            if Time[3] >= 24:
+                break
+    return [ rising, sunset ]
 

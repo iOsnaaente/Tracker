@@ -1,12 +1,14 @@
-from StepMotors     import Motors, Lever_control
+from Levers         import Lever_control
+from Timanager      import Timemanager 
+from StepMotors     import Motors
 from DS3231         import DS3231
-from time           import sleep
-from machine        import Pin
 from SunPosition    import *
 from FileStatements import *
 from Const          import * 
 
-import _thread   as thread
+from time           import sleep
+from machine        import Pin
+
 import  select
 import  struct 
 import  sys
@@ -20,138 +22,47 @@ MOTORS.set_torque( True )
 
 # BOTÕES / ALAVANCAS PARA MOVER OS MOTORES
 LEVERS = Lever_control( lever_pins_A = [BUTTON_GP,BUTTON_GM], lever_pins_B = [BUTTON_EP,BUTTON_EM], LED = [LED1_RED, LED1_BLUE]  )
-
-# Função de mover chamada via lambda para reduzir tamanho da chamada 
-def move( gir, ele, tem = 2):
-    MOTORS.move( gir, ele, tem )
-
-def move_home( ):
-    pass
-
-
+   
 # LEDS E LED BUILTIN DA PLACA PICO 
 LED2_RED    = Pin(LED2_RED , Pin.OUT)
 LED2_BLUE   = Pin(LED2_BLUE, Pin.OUT)
 LED_BUILTIN = Pin( LED_BUILTIN, Pin.OUT ) 
 
+# SERIAL CONFIGURAÇÕES 
+BYTE_INIT   = b'INIT'  
+unpacked = lambda n_bytes, byte_type = 'B' : struct.unpack( byte_type, sys.stdin.buffer.read( n_bytes ))[0]
 
 # PINOS DO DS3231 
 DS = DS3231( 0, Pin( SDA_DS ), Pin( SCL_DS ), addrs = [0x68, 0x57] )
-#DS.set_time( 21, 7, 26, 13, 55, 15  )
 
-
-# FILE CONFIGURATIONS 
-FILE_PATH = 'mem_pico.txt'
-FILE_OP   = 'rw' 
-
+# CONTROLE DOS ANGULOS DO SOL 
+timanager = Timemanager( DS, MOTORS )
 
 # Garbage Collector Enable 
 gc.enable()
 
+# SETAR A HORA DO DS3231 
+#DS.set_time( 21, 10, 4, 16, 29, 20  )
 
-# CONFIGURAÇÕES DE RASTREAMENTO 
-LATITUDE  = -29.16530765942215
-LONGITUDE = -54.89831672609559 
-TIME      = DS.now()
-LOC       = [ LATITUDE, LONGITUDE, 298.5, 101.0 ] 
-
-
-L_AZIMUTE , L_ALTITUDE = [ float(s2f) for s2f in file_readlines( FILE_PATH, 'r' ) ]
-A_AZIMUTE , A_ALTITUDE = compute( LOC, TIME )
-D_AZIMUTE , D_ALTITUDE = L_AZIMUTE - A_AZIMUTE, L_ALTITUDE - A_ALTITUDE
-
-
-
-S_rise, S_set = get_twilights( LOC, TIME )
-S_tot = (S_set[3]*3600 + S_set[4]*60 + S_set[5]) - (S_rise[3]*3600 + S_rise[4]*60 + S_rise[5])
-S_tot /= 60*5
-M =  S_tot // 60
-S = (S_tot  % 60) // 1
-NEW_TIME = S_rise
-
-def up_fake_time( up = False ):
-    global NEW_TIME
-    global S_tot
-    global S
-    global M
-    
-    if up :
-        S_rise, S_set = get_twilights( LOC, TIME )
-        S_tot = (S_set[3]*3600 + S_set[4]*60 + S_set[5]) - (S_rise[3]*3600 + S_rise[4]*60 + S_rise[5])
-        S_tot /= 60*5
-        M =  S_tot // 60
-        S = (S_tot  % 60) // 1
-        NEW_TIME = S_rise
-
-    NEW_TIME[5] += S
-    NEW_TIME[4] += M
-    if NEW_TIME[5] >= 60:
-        NEW_TIME[4] += 1
-        NEW_TIME[5] %= 60
-    if NEW_TIME[4] >= 60:
-        NEW_TIME[3] += 1
-        NEW_TIME[4] %= 60
-    NEW_TIME = [ int(d) for d in NEW_TIME ]
-    return NEW_TIME 
-    
-# CONFIGURAÇÕES DE LOCK PARA TRABALHO COM MULTIPLAS THREADS 
-baton_stdin = thread.allocate_lock()
-baton_mot   = thread.allocate_lock()
-
-
-AUTOMATIC_WAKE_UP  = 10
-AUTOMATIC_BACKWARD = 20
-AUTOMATIC_TRACKING = 30
-AUTOMATIC_SLEEPING = 40
-
+# ESTADO DE INICIALIZAÇÃO
 STATE = AUTOMATIC_WAKE_UP
 
-#thread.start_new_thread( motors_control, () ) 
-
 while True:
-    
+    # INICIALIZAÇÃO
     if STATE == AUTOMATIC_WAKE_UP:
         print( "BOM DIA!!!") 
-        #TIME = DS.now() 
-        TIME = up_fake_time( up = True )
-
-        L_AZIMUTE , L_ALTITUDE = [ float(s2f) for s2f in file_readlines( FILE_PATH, 'r' ) ]
-        if L_AZIMUTE >= 180:
-            L_AZIMUTE -= 360
-            
-        A_AZIMUTE , A_ALTITUDE = compute( LOC, TIME )
-        
-        D_AZIMUTE, D_ALTITUDE  = (A_AZIMUTE-L_AZIMUTE), (A_ALTITUDE-L_ALTITUDE)
-        L_AZIMUTE, L_ALTITUDE  =  A_AZIMUTE           ,  A_ALTITUDE
-        
-        file_write( FILE_PATH, "%3.10f\n%3.10f"%(L_AZIMUTE, L_ALTITUDE), 0, 'wo')
-        
-        print( "Movendo para: Azi( {} ) e Alt( {} )".format(D_AZIMUTE, D_ALTITUDE) )
-        move( D_AZIMUTE , -D_ALTITUDE , 10 )
-        
+        #TIME = timanager.up_fake_time( up = True )
+        TIME = DS.now() 
+        timanager.start( TIME )
         STATE = AUTOMATIC_TRACKING
-        continue 
-    
-    
+
+    # RASTREADOR 
     elif STATE == AUTOMATIC_TRACKING:
-        #TIME = DS.now() 
-        TIME = up_fake_time( )
+        #TIME = timanager.up_fake_time( )
+        TIME = DS.now() 
+        timanager.update( TIME )
         
-        A_AZIMUTE, A_ALTITUDE = compute( LOC, TIME )
-        
-        D_AZIMUTE_HO = abs(A_AZIMUTE-L_AZIMUTE) 
-        D_AZIMUTE_AH = abs((360-A_AZIMUTE)+L_AZIMUTE)
-       
-        D_AZIMUTE    = D_AZIMUTE_HO  if D_AZIMUTE_HO < D_AZIMUTE_AH   else D_AZIMUTE_AH 
-        D_ALTITUDE   = (A_ALTITUDE-L_ALTITUDE)
-        
-        L_AZIMUTE, L_ALTITUDE =  A_AZIMUTE , A_ALTITUDE
-        file_write( FILE_PATH, "%3.10f\n%3.10f"%(L_AZIMUTE, L_ALTITUDE), 0, 'wo')
-        
-        move( -D_AZIMUTE, -D_ALTITUDE, 10 ) 
-        #move( 0, -2*D_ALTITUDE, 10 ) 
-        
-        if L_ALTITUDE > 0:
+        if timanager.get_altitude() > 0:
             LED2_BLUE.high()
             LED2_RED.low()            
         else:
@@ -159,48 +70,48 @@ while True:
             LED2_RED.high()
             STATE = AUTOMATIC_BACKWARD 
     
+    # RETORNO PARA O PONTO INICIAL DO DIA SEGUINTE 
     elif STATE == AUTOMATIC_BACKWARD:
         TIME[2] += 1
-        #TIME = DS.now()
-        
-        TIME = up_fake_time( up = True )
-        
-        A_AZIMUTE, A_ALTITUDE = compute( LOC, TIME )
+        if TIME[1] == 2: 
+            if ANB(TIME[0]) :  DOM[1] = 29 
+            else:              DOM[1] = 28 
+        if TIME[2] > DOM[TIME[1]]:
+            TIME[1] += 1
+            TIME[2] = 1 
+            if TIME[1] > 12: 
+                TIME[0] += 1
+                TIME[1] = 1 
+            
+        timanager.update( TIME )
 
-        print( L_AZIMUTE, A_AZIMUTE ) 
-        print( L_ALTITUDE, A_ALTITUDE )
-        
-        D_AZIMUTE  = (360-L_AZIMUTE)+A_AZIMUTE
-        D_ALTITUDE = (A_ALTITUDE-L_ALTITUDE)
-        
-        L_AZIMUTE, L_ALTITUDE =  A_AZIMUTE , A_ALTITUDE
-        file_write( FILE_PATH, "%3.10f\n%3.10f"%(L_AZIMUTE, L_ALTITUDE), 0, 'wo')
-        
-        FIRST_NIBBLE_AZI = D_AZIMUTE //2
-        FIRST_NIBBLE_ALT = D_ALTITUDE + 15
-        
-        SECOND_NIBBLE_AZI = D_AZIMUTE //2
-        SECOND_NIBBLE_ALT = D_ALTITUDE - 15
-        
-        print( FIRST_NIBBLE_AZI, SECOND_NIBBLE_AZI )
-        print( FIRST_NIBBLE_ALT, SECOND_NIBBLE_ALT )
-        
-        move( FIRST_NIBBLE_AZI , -FIRST_NIBBLE_ALT , 10 ) 
-        move( SECOND_NIBBLE_AZI, 0, 10 ) 
-        move( 0, -SECOND_NIBBLE_ALT, 10 ) 
-        #move( 0, -2*D_ALTITUDE, 10 )
-        
         STATE = AUTOMATIC_SLEEPING
         continue 
     
-    
+
+    # ESPERA O NOVO DIA NASCER 
     elif STATE == AUTOMATIC_SLEEPING:
-        sleep( 10 )
-        STATE = AUTOMATIC_TRACKING
-    
-    
-    
-    # SALVAR A DATA NA EEPROM DO RASP
+        TIME = DS.now() 
+        if timanager.check_alt( TIME ):
+            STATE = AUTOMATIC_TRACKING
+        
+
+    # VERIFICA SE RECEBEU ALGO DA SERIAL 
+    while sys.stdin in select.select( [sys.stdin], [sys.stdout], [sys.stderr], 0 )[0]:  
+        cmd = sys.stdin.read(1)        
+        if cmd == BYTE_INIT[count]:  count += 1
+        else:                        count  = 0
+ 
+        if count == 4:
+            count = 0
+            BYTE_ID  = unpacked(1)
+            if   BYTE_ID == b'H':
+                print('Recebido: {}'.format(BYTE_ID))
+            elif BYTE_ID == 'M':
+                print('Recebido: {}'.format(BYTE_ID))
+            
+
+
     # FAZER O PINO DE INTERRUPÇÃO CASO FALTE LUZ
 
     #sys.stdout.write( struct.pack('b', 99 ) )
@@ -208,11 +119,7 @@ while True:
     #sys.stdout.write( struct.pack('ff', AZIMUTE, ALTITUDE ) )
     #sys.stdout.write( struct.pack('BBBBBB', TIME[0], TIME[1], TIME[2], TIME[3], TIME[4], TIME[5] ) )
     
-    print( "\n" )
-    print( "AZIMUTE (A\D):\t{:2.4f}\t\t{:2.4f}".format( A_AZIMUTE , D_AZIMUTE ) ) 
-    print( "ALTITUDE (A\D):\t{:2.4f}\t\t{:2.4f}".format( A_ALTITUDE, D_ALTITUDE) )
-    print( "Data:\t\t{}/{}/{}\t\tHora:\t\t{}:{}:{}".format(TIME[0],TIME[1],TIME[2],TIME[3],TIME[4],TIME[5]) )
-    print( "Azimute:\t{:2.3f}\t\tAltitude:\t{:2.3f}".format(L_AZIMUTE, L_ALTITUDE), end='\n\n' )
+    #timanager.print()
     
     # GARBAGE COLLECTOR 
     gc.collect()
