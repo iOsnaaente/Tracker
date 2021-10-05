@@ -44,9 +44,10 @@ TEMPERATURE =  298.5
 PRESSURE    =  101.0
 
 # MACRODEFINIÇÕES 
-AUTOMATIC_WAKE_UP  = 0 
-AUTOMATIC_TRACKING = 1
-AUTOMATIC_BACKWARD = 2
-AUTOMATIC_SLEEPING = 3
-MANUAL_CONTROLING  = -1 
-
+AUTOMATIC_SLEEPING =  3 # Dormindo esperando um novo dia começar 
+AUTOMATIC_BACKWARD =  2 # Retorna para a posição inicial do novo dia
+AUTOMATIC_TRACKING =  1 # Rastreia o sol em um dia normal 
+WAKE_UP            =  0 # Opção de inicio. É chamado quando o Rasp liga
+MANUAL_CONTROLING  = -1 # Ativa o controle por Levers 
+MANUAL_STOPING     = -2 # Para o rastreio do tracker
+MANUAL_DEMO        = -3 # Segue o sol de forma acelerada ( Demonstração ) 

@@ -105,6 +105,7 @@ class Timemanager:
         
         self.move( -self.D_AZIMUTE, -self.D_ALTITUDE, 10 )
 
+
     '''
     VERIFICA SE A ALTURA É MAIOR QUE ZERO 
     '''
