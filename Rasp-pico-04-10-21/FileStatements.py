@@ -18,3 +18,4 @@ def file_readlines( file_path, OP = 'r'  ):
 def file_size( file_path, OP = 'r'  ) :
     with open( file_path, OP ) as file:
         return file.tell() 
+

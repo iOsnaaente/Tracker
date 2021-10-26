@@ -87,7 +87,7 @@ class Motor:
             self.nano_step -= 1  
             n_pulso += 1
             
-        print(self.name, "\tNumero de pulsos : ", n_pulso, "\tNano pulso: ", self.nano_step, "\tGraus: ", angle, "º" )
+        #print(self.name, "\tNumero de pulsos : ", n_pulso, "\tNano pulso: ", self.nano_step, "\tGraus: ", angle, "º" )
         return n_pulso
 
 class Motors:
@@ -134,3 +134,4 @@ class Motors:
                 e_pulses -= 1
                 
         self.GIR_POS, self.ELE_POS = self.get_positions()
+

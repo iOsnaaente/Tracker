@@ -20,15 +20,13 @@ LED2_BLUE   = 13
 
 ENABLE_MTS  = 14
 
-NOT_USED    = 15
+POWER       = 15
 
 SDA_DS      = 16 
 SCL_DS      = 17
 
-EE_SCK      = 18
-EE_DOO      = 19
-EE_DIO      = 20
-EE_CS       = 21
+SDA_MAG     = 18 
+SCL_MAG     = 19
 
 LED_BUILTIN = 25
 
@@ -51,3 +49,7 @@ WAKE_UP            =  0 # Opção de inicio. É chamado quando o Rasp liga
 MANUAL_CONTROLING  = -1 # Ativa o controle por Levers 
 MANUAL_STOPING     = -2 # Para o rastreio do tracker
 MANUAL_DEMO        = -3 # Segue o sol de forma acelerada ( Demonstração ) 
+GET_DATA           = 99 
+LOW = 0
+HIGH = 1 
+
