@@ -1,4 +1,6 @@
+from typing import Counter
 from dearpygui.dearpygui import *
+from win32api import SendMessage
 from utils.serial_reader import serialPorts 
 from utils.Model         import SunPosition
 from serial              import Serial
@@ -82,7 +84,7 @@ def att_CMD_Pico( COMP : Serial ):
         try:
             read = COMP.read( get_nBytes( COMP ) )
             if len(read) > 3: 
-                buff_in.append( '[{}] '.format( buff_count ) + str(read) ) 
+                buff_in.append( '[{}] '.format( buff_count ) + str(read.decode()) ) 
                 buff_bytes  = read 
                 buff_count += 1
 
@@ -150,9 +152,9 @@ def att_Serial_Pico( COMP : Serial ):
                         configure_item( 45_1_7, p1 = [ 100 + r*cos(math.radians(MESR_Angle)), 10+r*(1-sin(math.radians(MESR_Angle)))])
                         
                     except:
-                        pass 
+                        configure_item( 46_1_1_1, default_value = 'Somente modo de Demonstração(Demo).' ) 
     else: 
-        configure_item( 46_1_1_1, default_value = 'DESCONECTADO...' )
+        configure_item( 46_1_1_1, default_value = 'DESCONECTADO!' )
         hide_item( 45_1_7 )
         hide_item( 44_1_9)
 
@@ -175,6 +177,28 @@ def att_motors_data( sender, data, user ):
     ME_uStep     = get_value( 43_2_3 ) 
 
     # ENVIAR A MENSAGEM DE ADAPTAÇÃO PARA O RASPICO 
+
+def write_message(sender, data, user ):
+    msg = get_value( 46_2_2_2 )
+    set_value( 46_2_2_2, '' )
+    if CONNECTED: 
+        try:
+            COMP.write( msg.encode() )
+            print( 'Enviando:', msg )
+        except: 
+            print("Erro serial.. ")
+
+def write_message_buttons(sender, data, user ):
+    if CONNECTED:
+        msg = user if type(user) == str else str(user)
+        try:
+            COMP.write( msg.encode() )
+            print( 'Enviando:', msg )
+        except: 
+            print("Erro serial.. ")
+    else: 
+        print("Não conectado")
+
 
 def init_atuador( windows : dict ): 
     # Serial Config 
@@ -228,14 +252,15 @@ def init_atuador( windows : dict ):
         add_same_line()
         add_button(label="DESCONECTAR ?", width=150, id = 42_6, callback= lambda : hide_item(42_6) if not COMP.close() else 1 )
         hide_item( 42_6) 
-        add_spacing(count= 3)
+        add_spacing(count= 10)
 
-        with child( id=42_5_0, autosize_x= True, autosize_y= True, no_scrollbar=True, border= True ):
-            add_text( 'Data Calculada:' )
-            add_text( id = 42_5_1, default_value='No data')
-            add_button(label="Atualizar", width=100, id = 42_5_2, callback= lambda : set_value( 42_5_1, str(dt.datetime.now().strftime('%A %d/%m/%Y - %H:%M:%S')) ) if sun_data.update_date() == None else 1 )
-            add_same_line()
-            add_button(label="Limpar", width=100, id = 42_5_3, callback= lambda : set_value( 42_5_1, 'No data' ) )
+        add_text( 'Data Calculada:' )
+        add_same_line()
+
+        add_text( id = 42_5_1, default_value='No data')
+        add_button(label="Atualizar", width=100, id = 42_5_2, callback= lambda : set_value( 42_5_1, str(dt.datetime.now().strftime('%A %d/%m/%Y - %H:%M:%S')) ) if sun_data.update_date() == None else 1 )
+        add_same_line()
+        add_button(label="Limpar", width=100, id = 42_5_3, callback= lambda : set_value( 42_5_1, 'No data' ) )
 
     # Step Motors Config 
     with window( label = 'Motores'    , id = 43_0, width= 455, height= 480, pos = [10,360], no_resize=True, no_move = True, no_collapse = True, no_close = True, no_title_bar = True) as config_AT:
@@ -317,9 +342,9 @@ def init_atuador( windows : dict ):
 
         w, h = get_item_width(zenite_config_AT), get_item_height(zenite_config_AT)
         r    = w//1.3 if w < h else h//1.3
-        pyi = 10
-        pxi = 100 
-        p   = 10 
+        pyi = 10*10/h
+        pxi = 100*100/w 
+        p   = 10*10/h
 
         add_drawlist(     id     = 45_1_0, width  = w*0.95 , height = h*0.95         , pos = [0,0] )
         draw_polyline(    parent = 45_1_0, id     = 45_1_1 , points = [ [ pxi, pyi ] , [ pxi, pyi+r ], [ pxi + r, pyi + r ] ], color = color['white'](200), thickness= 2               )
@@ -352,19 +377,71 @@ def init_atuador( windows : dict ):
     with window( label = 'Draw_Window', id = 46_0, width= 995, height= 480, pos = [470,360], no_resize=True, no_move = True, no_collapse = True, no_close = True, no_title_bar = True) as draw_tracker_AT:
         windows['Atuadores'].append( draw_tracker_AT )  
     
-        with child(id = 46_1_0, width = (get_item_width(46_0)*0.3) , autosize_y = True, border = False):
-            add_text( 'Informações recebidas pela Serial: ')
-            with child( id = 46_1_1_0, width = get_item_width(46_1_0), autosize_y = True, border = True ):
-                add_text('Informações do sistema:')
-                add_spacing()
-                add_text( id = 46_1_1_1, default_value = 'DISCONNECTED...' )
+        with child(id = 46_1_0, width = (get_item_width(46_0)*0.3), border = False):
+            add_text('Opções padrão de operação do sistema:')
+            with child( id = 46_1_1_0, width = get_item_width(46_1_0), autosize_y=True, border = True ):
+                add_button(label='send', callback = write_message_buttons, user_data='INITSO')
+                add_same_line()
+                add_text('S -> Parar o tracker')
+                add_button(label='send', callback = write_message_buttons, user_data='INITDO')
+                add_same_line()
+                add_text('D -> Entra no modo Demo )')
+                add_button(label='send', callback = write_message_buttons, user_data='INITCO')
+                add_same_line()
+                add_text('C -> Continuar processo')
+                add_button(label='send', callback = write_message_buttons, user_data='INITRO')
+                add_same_line()
+                add_text('R -> Retornar inicio')
+                add_button(label='send', callback = write_message_buttons, user_data='INITOO')
+                add_same_line()
+                add_text('O -> Ativar motores')
+                add_button(label='send', callback = write_message_buttons, user_data='INITFO')
+                add_same_line()
+                add_text('F -> Desativar motores ')
+                add_button(label='send', callback = write_message_buttons, user_data='INITGO')
+                add_same_line()
+                add_text('G -> Get data - Conv net')
+                add_button(label='send', callback = write_message_buttons, user_data='INITAO')
+                add_same_line()
+                add_text('A -> Data acelerometro')                
+                add_button(label='send', callback = write_message_buttons, user_data='INITPO')
+                add_same_line()
+                add_text('P -> Get data')
+                
+                add_spacing(count=3)
+                add_button(label='send', callback = write_message_buttons, user_data='INITHO', enabled=False)
+                add_same_line()
+                add_text('H -> Trocar a hora')
+                add_input_intx(id=46_1_1_1, size=3 )
+                add_input_intx(id=46_1_1_2, size=3 ) 
+                add_spacing(count=3)
+
+                add_button(label='send', callback = write_message_buttons, user_data='INITMO', enabled=False)
+                add_same_line()
+                add_text('M -> Mover ambos motores')
+                add_input_floatx(id=46_1_1_3, size=2 )
+                add_spacing(count=3) 
+
+                add_button(label='send', callback = write_message_buttons, user_data='INITmO', enabled=False)
+                add_same_line()
+                add_text('m -> Mover um motore')
+                add_input_float(id=46_1_1_4 ) 
+                add_spacing(count=3)
+
+
 
         add_same_line()
-        with child( id = 46_2_0, width= (get_item_width(46_0)*0.7), autosize_y = True, border = False ):
+        with child( id = 46_2_0, width= (get_item_width(46_0)*0.7), autosize_y=True, border = False ):
             add_text( 'PICO_SM: RASPICO Serial Monitor')
-            with child( id = 46_2_1_0, autosize_x= True, autosize_y= True, border= True):
+            with child( id = 46_2_1_0, autosize_x= True, border= True):
                 add_text( 'CMD:')       
-                add_text( id = 46_2_1_1, default_value = 'DISCONNECTED...' )
+                add_text( id = 46_2_1_1, default_value = 'DESCONECTADO!' )
+            
+            with child( id = 46_2_2_0, autosize_x= True, pos=[0, get_item_height(46_0)-54]):
+                add_group(id = 46_2_2_1_0, horizontal=True)
+                add_text( parent=46_2_2_1_0, id = 46_2_2_1, default_value="To send: ")
+                add_input_text(parent=46_2_2_1_0, id = 46_2_2_2)
+                add_button( parent=46_2_2_1_0, label = 'send', callback = write_message)
 
     hide_item( 42_0)
     hide_item( 43_0)
@@ -372,16 +449,85 @@ def init_atuador( windows : dict ):
     hide_item( 45_0)
     hide_item( 46_0)
 
-def render_atuador() : 
-    att_Serial_Pico( COMP )
-    att_CMD_Pico( COMP )
+def resize_atuador(): 
     cw, ch = get_item_width( 1_0 ) / 1474, get_item_height( 1_0 )/ 841 
-    configure_item( 4_2_0, width = cw*455, height = ch*330, pos = [cw*10 , ch*25 ] ) #[455, 330] -> Serial
-    configure_item( 4_3_0, width = cw*455, height = ch*480, pos = [cw*10 , ch*360] ) #[455, 480] -> Motores
-    configure_item( 4_4_0, width = cw*495, height = ch*330, pos = [cw*470, ch*25 ] ) #[495, 330] -> Azimue
-    configure_item( 4_5_0, width = cw*495, height = ch*330, pos = [cw*970, ch*25 ] ) #[495, 330] -> Zenite 
-    configure_item( 4_6_0, width = cw*995, height = ch*480, pos = [cw*470, ch*360] ) #[995, 480] -> Draw 
-    
+    # General Draw              46_0
+    def general_att():
+        configure_item( 46_0     , width  = cw*995, height = ch*480, pos = [cw*470, ch*360] ) #[995, 480] -> Draw 
+        configure_item( 46_1_0   , width  = (cw*995)*0.3     ) 
+        configure_item( 46_2_0   , width  = (cw*995)*0.675   )
+        configure_item( 46_2_1_0 , height = (cw*480)-100     )
+        configure_item( 46_2_2_0 , pos    = [0, (cw*480)-54] )
+        configure_item( 46_2_2_2 , width  = (cw*995)*0.525   )
+    general_att()
+
+    # Zenite / Altitude Draw    45_0 
+    def zenite_att():
+        configure_item( 45_0, width = cw*495, height = ch*330, pos = [cw*970, ch*25 ] ) #[495, 330] -> Zenite 
+        def draw_semi_circle( parent, id, center, radius, angle_i, angle_f, color, segments = 360, closed = False, thickness = 1 ):
+            delete_item(id)
+            angles = [ ((angle_f - angle_i)/segments)*n for n in range(segments) ] 
+            points = [ [ center[0] + radius*cos(ang), center[1] - radius*sin(ang) ] for ang in angles ]
+            draw_id = draw_polyline ( parent = parent, id = id, points = points, color= color, closed = closed, thickness= thickness )
+        configure_item( 45_0, width = cw*495, height = ch*330, pos = [cw*970, ch*25 ] ) #[495, 330] -> Zenite 
+        w, h        = cw*495, ch*330
+        r           = w//1.3 if w < h else h//1.3
+        pyi, pxi, p = h*10/495, w*50/330, h*10/495
+        configure_item(   45_1_0 , width  = w*0.95 , height = h*0.95 , pos = [0,0] )
+        configure_item(   45_1_1 , points = [ [ pxi, pyi ] , [ pxi, pyi+r ], [ pxi + r, pyi + r ] ], color = color['white'](200), thickness= 2               )
+        draw_semi_circle( parent = 45_1_0, id = 45_1_2 , center = [ pxi, pyi + r], radius = r, angle_i = 0, angle_f = math.radians(91)  , color = color['white'](200), segments= 90, thickness= 2 )
+        ang_transit = sun_data.get_azi_from_date( sun_data.transit )[0] # [ alt , azi ]
+        ang_altitud = sun_data.alt
+        configure_item( 45_1_3, p1  = [ pxi, pyi+r ], p2 = [pxi + r*cos(ang_transit), pyi+r*(1-sin(ang_transit))] )
+        configure_item( 45_1_4, p1  = [ pxi + r*cos(ang_altitud), pyi+r*(1-sin(ang_altitud))], p2 = [pxi, pyi+r]  ) 
+        configure_item( 45_1_5, pos = [ w-75, pyi] )
+        configure_item( 45_1_6, pos = [ w-75, 25] )  
+        configure_item( 45_1_7, p1  = [ pxi + r*cos(0), pyi+r*(1-sin(0))], p2 = [pxi, pyi+r] ) 
+        hide_item( 45_1_7 )
+        configure_item( 45_2, pos=[w*0.025,h-50], width= w*0.95 )
+        move_item_up(45_2)
+    zenite_att()
+
+    # Azimute Draw              44_0
+    def azimute_att(): 
+        configure_item( 44_0, width = cw*495, height = ch*330, pos = [cw*470, ch*25 ] ) #[495, 330] -> Azimue
+        configure_item( 44_1_0  , width = cw*495, height = ch*330, pos = [0,-25] )
+        w, h = [ get_item_width(44_1_0)/2, get_item_height(44_1_0)/2] 
+        r, p = (w/2)*1.25 if w < h else (h/2)*1.25 , 20
+        configure_item( 44_1_1, center = [ w       , h     ] , radius =  r            )
+        configure_item( 44_1_2, p1     = [ w - r   , h     ] , p2     = [ w + r, h ]  )
+        configure_item( 44_1_3, pos    = [ w - r-p , h-7.5 ] )
+        configure_item( 44_1_4, pos    = [ w + r+p , h-7.5 ] )
+        configure_item( 44_1_5, pos    = [ w -6    , h-r-p ] )
+        ## RENDERIZAÇÃO
+        ang_ris = sun_data.get_azi_from_date( sun_data.rising )[1] # [ alt , azi ]
+        ang_set = sun_data.get_azi_from_date( sun_data.sunset )[1] # [ alt , azi ]
+        configure_item( 44_1_6, p1 = [ w, h], p2 = [w + r*cos(ang_ris-math.pi/2), h + r*sin(ang_ris-math.pi/2)] )
+        configure_item( 44_1_7, p1 = [ w, h], p2 = [w + r*cos(ang_set-math.pi/2), h + r*sin(ang_set-math.pi/2)] )
+        w,h = cw*495, ch*330    
+        configure_item( 44_1_8, p1 = [w//2 + r*cos(math.pi/2), h//2 + r*sin(math.pi/2)], p2 = [ w//2, h//2 ] )
+        hide_item( 44_1_9 )
+        configure_item( 44_1_9, p1 = [w//2 + r*cos(math.pi/2), h//2 + r*sin(math.pi/2)], p2 = [ w//2, h//2 ] ) 
+        configure_item( 44_2, pos = [ w*0.025, h-50], width  = w*0.95, height = 50  )
+        move_item_up(44_2)
+    azimute_att()
+
+    # Step Motors Config        43_0 
+    def step_motors_att():
+        configure_item( 43_0, width = cw*455, height = ch*480, pos = [cw*10 , ch*360] ) #[455, 480] -> Motores
+        configure_item( 43_1_0, width= (cw*455)-15, height= 200)
+        configure_item( 43_2_0, width = (cw*455)-15, height= 200 )
+    step_motors_att() 
+
+    # Serial Config             42_0 
+    def serial_config_att():
+        configure_item( 42_0, width = cw*455, height = ch*330, pos = [cw*10 , ch*25 ] ) #[455, 330] -> Serial
+    serial_config_att()
+
+def render_atuador() : 
+    #att_Serial_Pico( COMP )
+    att_CMD_Pico( COMP )
+
     DAY_2Compute = get_value( 42_5_1 )
     MG_Resolucao = get_value( 43_1_1 ) 
     MG_Steps     = get_value( 43_1_2 ) 
@@ -391,3 +537,5 @@ def render_atuador() :
     ME_uStep     = get_value( 43_2_3 ) 
     MG_Angle     = get_value( 44_1   ) 
     ME_Angle     = get_value( 45_1   )
+
+    return [ DAY_2Compute, MG_Resolucao, MG_Steps , MG_uStep , ME_Resolucao, ME_Step , ME_uStep , MG_Angle , ME_Angle ]

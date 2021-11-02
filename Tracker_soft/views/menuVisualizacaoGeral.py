@@ -127,6 +127,7 @@ def update_sun_trajetory( draw_id, parent_id, all_day = False ):
     configure_item( id_link+11, center = sun                                         )
     for n, p in enumerate(dots):
         configure_item( id_link+(12+n) , center = p )
+
 # GIR 
 def att_draw_gir():
     global AZI_Angle
@@ -140,6 +141,7 @@ def att_draw_gir():
     configure_item( 2_2_1_1_3, p1     = [ r_gir*cos(math.radians(AZI_Angle)-math.pi/2)+center_gir[0], r_gir*sin(math.radians(AZI_Angle)-math.pi/2)+h_gir ] , p2     = center_gir               ) 
     configure_item( 2_2_1_1_4, center = center_gir                                                 , radius = 5                       ) 
     configure_item( 2_2_1_1_5, size = r_gir/6.5, text   = 'Azimute:\n\nAzimute Medida:\n%.4f \nAzimute Motor:\n%.4f \n\nAzimute Minima:\nHora:  %s\nValor: %.4f\n\nAzimute Máxima:\nHora:  %s\nValor: %.4f ' %( AZI_Angle, MG_Angle, str(sun_data.rising).split(' ')[1], sun_data.azimute_sunrise ,str(sun_data.sunset).split(' ')[1], sun_data.azimute_sunset )  )
+
 # ELE 
 def att_draw_ele() :
     global ME_Angle
@@ -155,6 +157,7 @@ def att_draw_ele() :
     configure_item( 2_2_2_1_4                   , center = center_ele                  , radius = 5 )
     configure_item( 2_2_2_1_5, text = 'Altitude:\n\nAltitude Medida:\n%.4f\nAltitude Motor:\n%.4f\n\nAltitude Máxima:\nData:  %s\nHora:  %s\nValor: %.4f ' %( ALT_Angle, ME_Angle, str(sun_data.transit).split(' ')[0], str(sun_data.transit).split(' ')[1], sun_data.elevation_transit) )
     configure_item( 2_2_2_1_5, size = r_ele/15 ) 
+
 
 def init_visualizacaoGeral( windows : dict ):
     with window( label = 'Posição solar' , id = 2_1_0, pos      = [50,50], width    = 500  , height      = 500 , no_move  = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ) as Posicao_sol_VG:
@@ -248,17 +251,10 @@ def init_visualizacaoGeral( windows : dict ):
         add_spacing(count = 1)
         add_spacing(count=1)
 
-def render_visualizacaoGeral():
-    global MG_Angle 
-    global ME_Angle 
-
-    global AZI_Angle
-    global ALT_Angle
-
+def resize_visualizacaoGeral():
     w , h  = get_item_width( 1_0   ), get_item_height( 1_0   ) # get the main_window dimension 
     w1, h1 = get_item_width( 2_1_0 ), get_item_height( 2_1_0 ) # get the child_window dimension 
-    w2, h2 = get_item_width( 2_2_0 ), get_item_height( 2_2_0 ) 
-
+    
     configure_item( 2_1_0    , width = w*2/3       , height    = h*3/5       , pos = [10 , 25 ]               ) # DESENHO 
     configure_item( 2_1_1_0  , width = w1-20       , height    = h1-50                                        ) # DRAWLIST
     update_sun_trajetory(     draw_id = 2_1_1_0    , parent_id = 2_1_0                                        ) # DRAWING 
@@ -271,6 +267,12 @@ def render_visualizacaoGeral():
 
     configure_item( 2_3_0    , width =  w/3 -20     , height    =  h - 30     , pos = [ w*2/3 +15, 25 ]        ) # LOG 
 
+def render_visualizacaoGeral():
+    global MG_Angle 
+    global ME_Angle 
+
+    global AZI_Angle
+    global ALT_Angle
 
     # Definição da Latitude/Longitude 
     sun_data.latitude  = str( get_value(2_3_10) ) # LATITUDE

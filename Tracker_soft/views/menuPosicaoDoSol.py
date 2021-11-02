@@ -65,22 +65,13 @@ def init_posicaoDoSol( windows : dict ):
         draw_polyline( parent = 3_2_1_0, id = 3_2_1_1  , points = get_semi_circle_points( center = [center[0], center[1]*1.75 ], radius = h*4/3, angle_i = 1, angle_f = 180, segments = 180, closed = True  ), color = (255,255,255,255) )
         draw_arrow( parent= 3210, p1 = [ 10, 10], p2 = [50,55] )
 
+def resize_posicaoDoSol():
+    w0, h0 = get_item_width( 1_0 ), get_item_height( 1_0 ) 
+    configure_item( 3_1_0, width = w0-15, height = h0*0.25   , pos = [ 10, 25] )
+    configure_item( 3_2_0, width = w0-15, height = h0*0.75-35, pos = [ 10, h0*0.25 + 30] )
 
 def render_posicaoDoSol():
     global MG_Angle 
     global ME_Angle 
     global AZI_Angle
     global ALT_Angle
-
-    w0, h0 = get_item_width( 1_0 ), get_item_height( 1_0 ) 
-    configure_item( 3_1_0, width = w0-15, height = h0*0.25   , pos = [ 10, 25] )
-    configure_item( 3_2_0, width = w0-15, height = h0*0.75-35, pos = [ 10, h0*0.25 + 30] )
-
-    w1, h1 = get_item_width( 3_1_0 ), get_item_height( 3_1_0 )
-
-
-    w2, h2 = get_item_width( 3_2_0 ), get_item_height( 3_2_0 )
-
-
-
-
