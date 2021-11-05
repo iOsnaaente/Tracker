@@ -161,14 +161,14 @@ def att_draw_ele() :
 
 def init_visualizacaoGeral( windows : dict ):
     with window( label = 'Posição solar' , id = 2_1_0, pos      = [50,50], width    = 500  , height      = 500 , no_move  = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ) as Posicao_sol_VG:
-        windows["Visualização geral"].append( Posicao_sol_VG )
+        windows["Visualizacao geral"].append( Posicao_sol_VG )
         w, h = get_item_width(2_1_0), get_item_height(2_1_0)
         add_drawlist( id = 2_1_1_0, width = w-20, height = h-50, label = 'Solar')
         draw_sun_trajetory( draw_id = 2_1_1_0, parent_id = 2_1_0 )
         add_progress_bar(  id = 2_1_2,   width = w   , height = 30  )
 
     with window( label = 'Atuação'       , id = 2_2_0, no_move  = True   , no_resize = True, no_collapse = True, no_close = True ) as Atuacao_VG:
-        windows["Visualização geral"].append( Atuacao_VG )
+        windows["Visualizacao geral"].append( Atuacao_VG )
         add_text('Área para a atução da posição dos paineis solares')
         w, h   = get_item_width(2_2_0), get_item_height(2_2_0) 
         center = cw, ch =  w//2 , h//2 
@@ -195,7 +195,7 @@ def init_visualizacaoGeral( windows : dict ):
             draw_text(     parent = 2_2_2_1_0, id = 2_2_2_1_5, text = "", pos = [10,10] )
 
     with window( label = 'Painel de log' , id = 2_3_0, no_move  = True   , no_resize = True, no_collapse = True, no_close = True, no_title_bar = True ) as Painel_log_VG:
-        windows["Visualização geral"].append( Painel_log_VG )
+        windows["Visualizacao geral"].append( Painel_log_VG )
         
         #Informações gerais do sistema - Automático 
         add_text('Informações gerais do sistema')

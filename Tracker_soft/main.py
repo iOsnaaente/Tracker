@@ -1,9 +1,4 @@
-from dearpygui.dearpygui import *
-from utils.Model         import SunPosition
-from serial              import Serial
-from time                import sleep 
-
-import os 
+from dearpygui.dearpygui         import *
 
 from views.menuInicio            import *
 from views.menuVisualizacaoGeral import *
@@ -13,10 +8,15 @@ from views.menuSensores          import *
 from views.menuRedNodeComm       import * 
 from views.menuConfigurações     import * 
 
+from utils.Model                 import SunPosition
+from serial                      import Serial
+from time                        import sleep 
+
+import os
+
 COMP : Serial = Serial() 
 PATH      = os.path.dirname( __file__ )
 PATH_IMG  = PATH + '\\utils\\img\\'
-
 
 DOM       = [ 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro' ]
 LATITUDE  = '-29.16530765942215'
@@ -56,14 +56,14 @@ color = {
 
 windows = {
             "Inicio"             : [  ],
-            "Visualização geral" : [  ],
-            "Posição do Sol"     : [  ],
+            "Visualizacao geral" : [  ],
+            "Posicao do sol"     : [  ],
             "Atuadores"          : [  ],
-            "Atuação da base"    : [  ],
-            "Atuação da elevação": [  ],
+            "Atuacao da base"    : [  ],
+            "Atuacao da elevacao": [  ],
             "Sensores"           : [  ],
-            "RednodeComunicacao" : [  ],
-            "Configurações"      : [  ],
+            "Rednode comunicacao": [  ],
+            "Configuracoes"      : [  ],
             'Sair'               : [  ],
             }
 
@@ -96,12 +96,12 @@ def configure_viewport():
 
 def resize_mainwindow (): 
     if   window_opened == 'Inicio'            : resize_inicio () 
-    elif window_opened == 'Visualização geral': resize_visualizacaoGeral() 
-    elif window_opened == 'Posição do Sol'    : resize_posicaoDoSol()
+    elif window_opened == 'Visualizacao geral': resize_visualizacaoGeral() 
+    elif window_opened == 'Posicao do sol'    : resize_posicaoDoSol()
     elif window_opened == 'Atuadores'         : resize_atuador()     
     elif window_opened == 'Sensores'          : resize_sensores()  
-    elif window_opened == 'RednodeComunicacao': resize_rednodecom()  
-    elif window_opened == 'Configurações'     : resize_configuracoes()  
+    elif window_opened == 'Rednode comunicacao': resize_rednodecom()  
+    elif window_opened == 'Configuracoes'     : resize_configuracoes()  
 
 def change_menu(sender, app_data, user_data ):
     global window_opened 
@@ -127,35 +127,40 @@ def closing_dpg( sender, data, user ):
 with window( label = 'Main Window', id = 1_0, autosize = True ) as main_window:
     with menu_bar(label = "MenuBar"):
         add_menu_item( label="Inicio"             , callback = change_menu, user_data = "Inicio"              )
-        add_menu_item( label="Visualização geral" , callback = change_menu, user_data = "Visualização geral"  )
-        add_menu_item( label="Posição do sol"     , callback = change_menu, user_data = "Posição do sol"      )
+        add_menu_item( label="Visualização geral" , callback = change_menu, user_data = "Visualizacao geral"  )
+        add_menu_item( label="Posição do sol"     , callback = change_menu, user_data = "Posicao do sol"      )
         add_menu_item( label="Atuadores"          , callback = change_menu, user_data = "Atuadores"           )
-        add_menu_item( label="Atuação da base"    , callback = change_menu, user_data = "Atuação da base"     )
-        add_menu_item( label="Atuação da elevação", callback = change_menu, user_data = "Atuação da elevação" )
+        add_menu_item( label="Atuação da base"    , callback = change_menu, user_data = "Atuacao da base"     )
+        add_menu_item( label="Atuação da elevação", callback = change_menu, user_data = "Atuacao da elevacao" )
         add_menu_item( label="Sensores"           , callback = change_menu, user_data = "Sensores"            )
-        add_menu_item( label="RedNode Comunicação", callback = change_menu, user_data = "RednodeComunicacao" )
-        add_menu_item( label="Configurações"      , callback = change_menu, user_data = "Configurações"       )
+        add_menu_item( label="RedNode Comunicação", callback = change_menu, user_data = "Rednode comunicacao" )
+        add_menu_item( label="Configurações"      , callback = change_menu, user_data = "Configuracoes"       )
         add_menu_item( label='Sair'               , callback = closing_dpg                                    )
 
 with theme( default_theme = True ) as theme_id:
-    add_theme_color( mvThemeCol_Button       , (255, 140, 23), category = mvThemeCat_Core )
+    add_theme_color( mvThemeCol_Button       , (52, 140, 215), category = mvThemeCat_Core )
     add_theme_style( mvStyleVar_FrameRounding,        5      , category = mvThemeCat_Core )
     # um azul bem bonito -> 52, 140, 215 
+    # um laranja bem bonito -> 255, 140, 23 
 
 
 configure_viewport()
 add_resize_handler(main_window, callback=resize_mainwindow ) 
 change_menu(None, None, 'Inicio' )
 
+#show_debug()
+#show_imgui_demo()
+#show_implot_demo() 
+
 while is_dearpygui_running():
     if not get_frame_count() % 25: 
         if   window_opened == 'Inicio'            : render_inicio () 
-        elif window_opened == 'Visualização geral': render_visualizacaoGeral() 
-        elif window_opened == 'Posição do Sol'    : render_posicaoDoSol()
+        elif window_opened == 'Visualizacao geral': render_visualizacaoGeral() 
+        elif window_opened == 'Posicao do sol'    : render_posicaoDoSol()
         elif window_opened == 'Atuadores'         : render_atuador()     
         elif window_opened == 'Sensores'          : render_sensores()  
         elif window_opened == 'RednodeComunicacao': render_rednodecom()  
-        elif window_opened == 'Configurações'     : render_configuracao()  
+        elif window_opened == 'Configuracoes'     : render_configuracao()  
 
     render_dearpygui_frame() 
 print('Volte Sempre')

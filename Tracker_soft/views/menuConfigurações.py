@@ -16,7 +16,7 @@ def theme_style( sender, data, user ):
 def init_configuracoes( windows : dict ): 
 
     with window( label = 'Configurações_Estilo'  , id = 9_1_0, pos = [50,50], width = 500, height = 500, no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ) as style_CONFG:
-        windows['Configurações'].append( style_CONFG )
+        windows['Configuracoes'].append( style_CONFG )
 
         add_text( 'Configurações de janela' )
         add_checkbox     ( label = 'WindowBorderSize'   , callback = theme_style, user_data=[mvStyleVar_WindowBorderSize], default_value = True                                                  )
@@ -61,7 +61,7 @@ def init_configuracoes( windows : dict ):
         add_slider_floatx( label = 'SelectableTextAlign' , callback = theme_style, user_data=[mvStyleVar_SelectableTextAlign], default_value = [0.5, 0.5], size = 2, min_value = 0, max_value = 1  )
 
     with window( label = 'Configurações_Colors'  , id = 9_2_0, pos = [50,50], width = 700, height = 500, no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ) as colors_CONFG:
-        windows['Configurações'].append( colors_CONFG )
+        windows['Configuracoes'].append( colors_CONFG )
         add_color_edit( label = 'mvThemeCol_Text                 ', id =generate_uuid(), default_value = (1.00 * 255, 1.00 * 255, 1.00 * 255, 1.00 * 255), callback = theme_color, user_data=[mvThemeCol_Text, mvThemeCat_Core] ) 
         add_color_edit( label = 'mvThemeCol_TextDisabled         ', id =generate_uuid(), default_value = (0.50 * 255, 0.50 * 255, 0.50 * 255, 1.00 * 255), callback = theme_color, user_data=[mvThemeCol_TextDisabled, mvThemeCat_Core]  )
         add_color_edit( label = 'mvThemeCol_WindowBg             ', id =generate_uuid(), default_value = (0.06 * 255, 0.06 * 255, 0.06 * 255, 0.94 * 255), callback = theme_color, user_data=[mvThemeCol_WindowBg, mvThemeCat_Core]  )
@@ -119,7 +119,7 @@ def init_configuracoes( windows : dict ):
         add_color_edit( label = 'mvThemeCol_ModalWindowDimBg     ', id =generate_uuid(), default_value = (0.80 * 255, 0.80 * 255, 0.80 * 255, 0.35 * 255), callback = theme_color, user_data=[mvThemeCol_ModalWindowDimBg, mvThemeCat_Core]  )
     
     with window( label = 'Configurações_Diversos', id = 9_3_0, pos = [50,50], width = 300, height = 500, no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ) as others_CONFG:
-        windows['Configurações'].append( others_CONFG ) 
+        windows['Configuracoes'].append( others_CONFG ) 
         w, h = get_item_width(7_3_0), get_item_height(7_3_0)
         add_text( 'Área de visualização das configurações', bullet = True ) 
         add_button(       label = 'Isto é um botão '        , width = w*0.9 , height = 50 )

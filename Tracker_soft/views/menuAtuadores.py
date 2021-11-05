@@ -74,6 +74,24 @@ def get_nBytes( comp : Serial ):
     else:
         print( 'COMP fechada ')
 
+def att_position(buffer : str ):
+    if type( buffer )  == bytes : 
+        buffer = buffer.decode()
+    try:
+        buffer = buffer.split('\n')
+        for line in buffer:
+            if 'Azimute' in line:
+                line.replace('Azimute:\\t', '').replace('\\r', '')
+                azimute = line
+            if 'Altitude' in line: 
+                line.replace('Altitude:\\t', '').replace('\\r', '')
+                altitude = line
+    except:
+        pass 
+    
+    print( azimute, altitude)
+   
+
 def att_CMD_Pico( COMP : Serial ):
     global CONNECTED
     global buff_count
@@ -90,8 +108,13 @@ def att_CMD_Pico( COMP : Serial ):
 
                 if len(buff_in) > BUFF_MAX: 
                     buff_in.pop(0)
+                
+                if 'Azimute' in read.decode():
+                    att_position(read)
         except:
-            pass 
+            pass
+
+
         aux = ''
         for i in buff_in:
             aux += i + '\n'  
@@ -210,7 +233,7 @@ def init_atuador( windows : dict ):
 
         # FAZER UMA THREAD PARA ESCUTAR NOVAS CONEXÕES SERIAIS 
         add_text('Selecione a porta serial: ')
-        add_combo( id=42_1, default_value='COM15', items= ['COM1', 'COM4', 'COM15', 'COM16'] )
+        add_combo( id=42_1, default_value='COM16', items= ['COM1', 'COM4', 'COM15', 'COM16'] )
         add_same_line( )
 
         def SR_refresh():
@@ -401,9 +424,9 @@ def init_atuador( windows : dict ):
                 add_button(label='send', callback = write_message_buttons, user_data='INITGO')
                 add_same_line()
                 add_text('G -> Get data - Conv net')
-                add_button(label='send', callback = write_message_buttons, user_data='INITAO')
+                add_button(label='send', callback = write_message_buttons, user_data='INITLO')
                 add_same_line()
-                add_text('A -> Data acelerometro')                
+                add_text('L -> Levers')                
                 add_button(label='send', callback = write_message_buttons, user_data='INITPO')
                 add_same_line()
                 add_text('P -> Get data')
