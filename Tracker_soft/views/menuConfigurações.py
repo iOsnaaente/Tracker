@@ -120,7 +120,7 @@ def init_configuracoes( windows : dict ):
     
     with window( label = 'Configurações_Diversos', id = 9_3_0, pos = [50,50], width = 300, height = 500, no_move = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ) as others_CONFG:
         windows['Configuracoes'].append( others_CONFG ) 
-        w, h = get_item_width(7_3_0), get_item_height(7_3_0)
+        w, h = get_item_width(9_3_0), get_item_height(9_3_0)
         add_text( 'Área de visualização das configurações', bullet = True ) 
         add_button(       label = 'Isto é um botão '        , width = w*0.9 , height = 50 )
         add_button(       label = 'E isso é um botão '      , width = w*0.44, height = 50 )
@@ -138,13 +138,13 @@ def init_configuracoes( windows : dict ):
         add_spacing() 
         with child( width = w*0.9, height = 100, label = 'Isto é um Child', border = True  ):
             add_text( 'Isto é uma Child')
-            add_drawlist( label = 'Isto é um Draw_list', width=200, height = 400  , id = 7_3_1 )
-            draw_text( parent = 731, text = 'Isto é um Draw_List' , pos = [10,0]  , size = 15  )
-            draw_text( parent = 731, text = 'Super longo'         , pos = [10,20] , size = 15  )
-            draw_text( parent = 731, text = 'Viu só'              , pos = [10,380], size = 15  )
+            add_drawlist(  id = 9_3_1, label = 'Isto é um Draw_list' , width = 200     , height = 400  )
+            draw_text( parent = 9_3_1, text  = 'Isto é um Draw_List' , pos   = [10,0]  , size   = 15   )
+            draw_text( parent = 9_3_1, text  = 'Super longo'         , pos   = [10,20] , size   = 15   )
+            draw_text( parent = 9_3_1, text  = 'Viu só'              , pos   = [10,380], size   = 15   )
         
-        add_text('Clique aqui para abrir um ... ', id = 7_3_2 )
-        with popup( parent = 7_3_2, mousebutton = mvMouseButton_Left):
+        add_text('Clique aqui para abrir um ... ', id = 9_3_2 )
+        with popup( parent = 9_3_2, mousebutton = mvMouseButton_Left):
             add_text( 'POPUP')
             add_button( label = 'Popup Com Botão também')
         

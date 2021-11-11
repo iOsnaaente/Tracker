@@ -1,49 +1,15 @@
 from dearpygui.dearpygui import *
 
-from utils.serial_reader import serialPorts 
-from utils.Model         import SunPosition
-
-from win32api            import GetSystemMetrics
-from serial              import Serial
-from struct              import unpack
-
 import datetime as dt 
-import ephem
 import math 
-import sys 
-import os 
 
 map_val = lambda value, in_min, in_max, out_min, out_max : ((value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min ) 
 cos     = lambda x : math.cos( x )
 sin     = lambda x : math.sin( x )
 tg      = lambda x : math.tan( x )
 
-color = {
-    "black"   : lambda alfa : [   0,   0,   0, alfa ],
-    "red"     : lambda alfa : [ 255,   0,   0, alfa ],
-    "yellow"  : lambda alfa : [ 255, 255,   0, alfa ],
-    "green"   : lambda alfa : [   0, 255,   0, alfa ],
-    "ciano"   : lambda alfa : [   0, 255, 255, alfa ],
-    "blue"    : lambda alfa : [   0,   0, 255, alfa ],
-    "magenta" : lambda alfa : [ 255,   0, 255, alfa ],
-    "white"   : lambda alfa : [ 255, 255, 255, alfa ],
-    'gray'    : lambda alfa : [ 155, 155, 155, alfa ],
-    'orange'  : lambda alfa : [ 255,  69,   0, alfa ],}
-
-MG_Angle      = 30.0
-ME_Angle      = 40.0  
-
-AZI_Angle = 0.0 
-ALT_Angle = 0.0 
-
-LATITUDE  = '-29.16530765942215'
-LONGITUDE = '-54.89831672609559'
-ALTITUDE  = 425
-UTC_HOUR  = -3
-
-sun_data  = SunPosition( LATITUDE, LONGITUDE, ALTITUDE )
+from registry import * 
 sun_data.update_date()
-
 
 # FUNÇÕES
 def get_semi_circle_points( center, radius, angle_i, angle_f, segments = 360, closed = False ):
@@ -130,17 +96,15 @@ def update_sun_trajetory( draw_id, parent_id, all_day = False ):
 
 # GIR 
 def att_draw_gir():
-    global AZI_Angle
-    global MG_Angle 
     w_gir, h_gir = [ get_item_width(2_2_1_1_0)//2, get_item_height(2_2_1_1_0)//2 ]
     r_gir        = w_gir*0.8 if w_gir<h_gir else h_gir*0.8 
     center_gir   = [ w_gir+r_gir, h_gir ]  
     configure_item( 2_2_1_1_0, width  = get_item_width(2_2_1_0)*0.9                                , height = get_item_height(2_2_1_0)*0.9 )
     configure_item( 2_2_1_1_1, center = center_gir                                                 , radius = r_gir                    ) 
-    configure_item( 2_2_1_1_2, p1     = [ r_gir*cos(math.radians(MG_Angle )-math.pi/2)+center_gir[0], r_gir*sin(math.radians(MG_Angle )-math.pi/2) +h_gir ] , p2     = center_gir               ) 
-    configure_item( 2_2_1_1_3, p1     = [ r_gir*cos(math.radians(AZI_Angle)-math.pi/2)+center_gir[0], r_gir*sin(math.radians(AZI_Angle)-math.pi/2)+h_gir ] , p2     = center_gir               ) 
+    configure_item( 2_2_1_1_2, p1     = [ r_gir*cos(math.radians(get_value(MG_Angle) )-math.pi/2)+center_gir[0], r_gir*sin(math.radians(get_value(MG_Angle ))-math.pi/2) +h_gir ] , p2     = center_gir               ) 
+    configure_item( 2_2_1_1_3, p1     = [ r_gir*cos(math.radians(get_value(MG_Angle))-math.pi/2)+center_gir[0], r_gir*sin(math.radians(get_value(MG_Angle))-math.pi/2)+h_gir ]  , p2     = center_gir               ) 
     configure_item( 2_2_1_1_4, center = center_gir                                                 , radius = 5                       ) 
-    configure_item( 2_2_1_1_5, size = r_gir/6.5, text   = 'Azimute:\n\nAzimute Medida:\n%.4f \nAzimute Motor:\n%.4f \n\nAzimute Minima:\nHora:  %s\nValor: %.4f\n\nAzimute Máxima:\nHora:  %s\nValor: %.4f ' %( AZI_Angle, MG_Angle, str(sun_data.rising).split(' ')[1], sun_data.azimute_sunrise ,str(sun_data.sunset).split(' ')[1], sun_data.azimute_sunset )  )
+    configure_item( 2_2_1_1_5, size = r_gir/6.5, text   = 'Azimute:\n\nAzimute Medida:\n%.4f \nAzimute Motor:\n%.4f \n\nAzimute Minima:\nHora:  %s\nValor: %.4f\n\nAzimute Máxima:\nHora:  %s\nValor: %.4f ' %( get_value(MG_Angle), get_value(MG_Angle), str(sun_data.rising).split(' ')[1], sun_data.azimute_sunrise ,str(sun_data.sunset).split(' ')[1], sun_data.azimute_sunset )  )
 
 # ELE 
 def att_draw_ele() :
@@ -151,21 +115,20 @@ def att_draw_ele() :
     center_ele   = [ w_ele - r_ele*0.1, r_ele+10]
     configure_item( 2_2_2_1_0, width  = get_item_width(2_2_2_0)*0.9  , height = get_item_height(2_2_2_0)*0.9 )
     configure_item( 2_2_2_1_1, points = get_semi_circle_points(        center = center_ele         , radius = r_ele, angle_i = 0, angle_f = math.radians(91), segments= 90, closed = True  )  )
-    if ALT_Angle < 0 : configure_item( 2_2_2_1_3, p1 =  center_ele, p2 = center_ele )
-    else:              configure_item( 2_2_2_1_3, p1 = [ r_ele*cos(math.radians(-ALT_Angle))+center_ele[0], r_ele*sin(math.radians(-ALT_Angle))+center_ele[1] ] , p2 = center_ele )
-    configure_item( 2_2_2_1_2                   , p1 = [ r_ele*cos(math.radians(-ME_Angle ))+center_ele[0], r_ele*sin(math.radians(-ME_Angle )) +center_ele[1] ] , p2 = center_ele )
+    if get_value(ME_Angle) < 0 : configure_item( 2_2_2_1_3, p1 =  center_ele, p2 = center_ele )
+    else:              configure_item( 2_2_2_1_3, p1 = [ r_ele*cos(math.radians(-get_value(ME_Angle)))+center_ele[0], r_ele*sin(math.radians(-get_value(ME_Angle)))+center_ele[1] ] , p2 = center_ele )
+    configure_item( 2_2_2_1_2                   , p1 = [ r_ele*cos(math.radians(-get_value(ME_Angle )))+center_ele[0], r_ele*sin(math.radians(-get_value(ME_Angle ))) +center_ele[1] ] , p2 = center_ele )
     configure_item( 2_2_2_1_4                   , center = center_ele                  , radius = 5 )
-    configure_item( 2_2_2_1_5, text = 'Altitude:\n\nAltitude Medida:\n%.4f\nAltitude Motor:\n%.4f\n\nAltitude Máxima:\nData:  %s\nHora:  %s\nValor: %.4f ' %( ALT_Angle, ME_Angle, str(sun_data.transit).split(' ')[0], str(sun_data.transit).split(' ')[1], sun_data.elevation_transit) )
+    configure_item( 2_2_2_1_5, text = 'Altitude:\n\nAltitude Medida:\n%.4f\nAltitude Motor:\n%.4f\n\nAltitude Máxima:\nData:  %s\nHora:  %s\nValor: %.4f ' %( get_value(ME_Angle), get_value(ME_Angle), str(sun_data.transit).split(' ')[0], str(sun_data.transit).split(' ')[1], sun_data.elevation_transit) )
     configure_item( 2_2_2_1_5, size = r_ele/15 ) 
-
 
 def init_visualizacaoGeral( windows : dict ):
     with window( label = 'Posição solar' , id = 2_1_0, pos      = [50,50], width    = 500  , height      = 500 , no_move  = True, no_resize = True, no_collapse = True, no_close = True, no_title_bar= True ) as Posicao_sol_VG:
         windows["Visualizacao geral"].append( Posicao_sol_VG )
         w, h = get_item_width(2_1_0), get_item_height(2_1_0)
-        add_drawlist( id = 2_1_1_0, width = w-20, height = h-50, label = 'Solar')
+        add_drawlist      ( id      = 2_1_1_0, width     = w-20  , height = h-50, label = 'Solar')
         draw_sun_trajetory( draw_id = 2_1_1_0, parent_id = 2_1_0 )
-        add_progress_bar(  id = 2_1_2,   width = w   , height = 30  )
+        add_progress_bar  ( id      = 2_1_2  , width     = w     , height = 30  )
 
     with window( label = 'Atuação'       , id = 2_2_0, no_move  = True   , no_resize = True, no_collapse = True, no_close = True ) as Atuacao_VG:
         windows["Visualizacao geral"].append( Atuacao_VG )
@@ -200,54 +163,54 @@ def init_visualizacaoGeral( windows : dict ):
         #Informações gerais do sistema - Automático 
         add_text('Informações gerais do sistema')
         add_drag_floatx( label = 'Ano/Mes/Dia Auto'  , id = 2_3_1, size = 3, format = '%4.0f', min_value = 1, max_value = 3000, speed = 1, no_input= True, )
-        add_spacing(count = 1)
-        add_drag_floatx( label = 'Hora/Min/Sec Auto' , id = 2_3_2, size = 3, format = '%4.0f', speed = 1, no_input = True)
-        add_spacing(count = 1)
-        add_drag_float( label = 'Valor no dia'   , id = 2_3_3, format = '%4.0f', speed = 0.1, min_value = 0, max_value = 26*3600, no_input = True)
-        add_spacing(count = 1)
-        add_drag_float( label = 'Dia Juliano'      , id = 2_3_4, format = '%4.0f', speed = 0.1, min_value = 0, max_value = 366, no_input = True)
-        add_spacing(count = 5)
+        add_spacing    ( count = 1 )
+        add_drag_floatx( label = 'Hora/Min/Sec Auto' , id = 2_3_2, size = 3, format = '%4.0f', speed = 1  , no_input = True )
+        add_spacing    ( count = 1 )
+        add_drag_float ( label = 'Valor no dia'      , id = 2_3_3, format = '%4.0f'          , speed = 0.1, min_value = 0   , max_value = 26*3600, no_input = True)
+        add_spacing    ( count = 1 )
+        add_drag_float ( label = 'Dia Juliano'       , id = 2_3_4, format = '%4.0f'          , speed = 0.1, min_value = 0   , max_value = 366, no_input = True)
+        add_spacing    ( count = 5 )
 
         # Informações gerais do sistema - Manual 
-        add_checkbox(     label = "Hora manual"    , id = 2_3_5, default_value = False )
-        add_spacing(count = 1 )
+        add_checkbox    ( label = "Hora manual"        , id = 2_3_5, default_value = False, callback = lambda sender, data, user : set_value(hora_manual, data))
+        add_spacing     ( count = 1 )
         add_input_floatx( label = 'Ano/Mes/Dia Manual' , id = 2_3_6, size = 3, default_value = [2020, 12, 25], format='%.0f', min_value = 1, max_value = 3000, enabled = False )
-        add_spacing(count = 1 )
+        add_spacing     ( count = 1 )
         add_input_floatx( label = 'Hora/Min/Sec Manual', id = 2_3_7, size = 3, default_value = [20, 30, 10]  , format='%.0f', min_value = 1, max_value = 60, enabled = False )
-        add_spacing(count = 1 )
-        add_drag_float(  label = 'Valor no dia'  , id = 2_3_8, format = '%4.0f', speed = 0.1 , min_value = 0, max_value = 24*3600, no_input= True, enabled= False)
-        add_spacing(count = 1 )
-        add_drag_float(  label = 'Dia Juliano'     , id = 2_3_9, format = '%4.0f', speed = 0.1 , min_value = 0, max_value = 366, no_input= True, enabled = False)
-        add_spacing(count = 10)
+        add_spacing     ( count = 1 )
+        add_drag_float  ( label = 'Valor no dia'       , id = 2_3_8, format = '%4.0f', speed = 0.1 , min_value = 0, max_value = 24*3600, no_input= True, enabled= False)
+        add_spacing     ( count = 1 )
+        add_drag_float  ( label = 'Dia Juliano'        , id = 2_3_9, format = '%4.0f', speed = 0.1 , min_value = 0, max_value = 366, no_input= True, enabled = False)
+        add_spacing     ( count = 10)
         
         # Definições de longitude e latitude local
         add_text('Definições de longitude e latitude local')
-        add_input_float( label = 'Latitude' , id = 2_3_10, default_value = -29.165307659422155, min_value = -90, max_value = 90, format = '%3.5f', indent=0.01  )
+        add_input_float( label = 'Latitude' , id = 2_3_10, default_value = float( get_value(LATITUDE ) ), min_value = -90, max_value = 90, format = '%3.5f', indent=0.01, callback = lambda sender, data, user : str( set_value( LATITUDE , data) ) )
         add_spacing(count = 1)
-        add_input_float( label = 'Longitude', id = 2_3_11, default_value = -54.89831672609559 , min_value = -90, max_value = 90, format = '%3.5f', indent=0.01 )
+        add_input_float( label = 'Longitude', id = 2_3_11, default_value = float( get_value(LONGITUDE) ), min_value = -90, max_value = 90, format = '%3.5f', indent=0.01, callback = lambda sender, data, user : str( set_value( LONGITUDE, data) ) )
         add_spacing(count=10)
 
         # Informações do sol 
         add_text('Informacoes do sol')
-        add_drag_float( label = 'Azimute'     , id = 2_3_12, format='%4.2f', speed=1, no_input= True)
+        add_drag_float( label = 'Azimute'      , id = 2_3_12, format='%4.2f', speed=1, no_input= True, source = MG_Angle )
         add_spacing(count = 1)
-        add_drag_float( label = 'Altitude'    , id = 2_3_13, format='%4.2f', speed=1, no_input= True)
+        add_drag_float( label = 'Altitude'     , id = 2_3_13, format='%4.2f', speed=1, no_input= True, source = ME_Angle )
         add_spacing(count = 1)
-        add_drag_float( label = 'Elevação (m)', id = 2_3_14, format='%4.0f', speed=1, no_input= True)
+        add_drag_float( label = 'Elevação (m)' , id = 2_3_14, format='%4.0f', speed=1, no_input= True, source = ALTITUDE )
         add_spacing(count = 1)
-        add_drag_floatx( label = 'Horas de sol', id = 2_3_15, size = 3, format='%.0f', no_input= True)
+        add_drag_floatx( label = 'Horas de sol', id = 2_3_15, size = 3, format='%.0f', no_input= True )
         add_spacing(count=10)
         
         # Posições de interesse
         add_text("Posicoes de interesse", )
         add_text('Nascer do sol (hh/mm/ss)')
-        add_drag_floatx( id = 2_3_16, size = 3, format='%.0f', speed=1, no_input= True)
+        add_drag_floatx( id = 2_3_16, size = 3, format='%.0f', speed=1, no_input= True, callback = lambda sender, data, user : set_value( sunrise     , data.extend([0]))  )
         add_spacing(count = 1)
         add_text('Culminante (hh/mm/ss)'   )
-        add_drag_floatx( id = 2_3_17, size = 3, format='%.0f', speed=1, no_input= True)
+        add_drag_floatx( id = 2_3_17, size = 3, format='%.0f', speed=1, no_input= True, callback = lambda sender, data, user : set_value( sunset      , data.extend([0]))  )
         add_spacing(count = 1)
         add_text('Por do sol (hh/mm/ss)'   )
-        add_drag_floatx( id = 2_3_18, size = 3, format='%.0f', speed=1, no_input= True)
+        add_drag_floatx( id = 2_3_18, size = 3, format='%.0f', speed=1, no_input= True, callback = lambda sender, data, user : set_value( sunculminant, data.extend([0]))  )
         add_spacing(count = 1)
         add_spacing(count=1)
 
@@ -268,27 +231,24 @@ def resize_visualizacaoGeral():
     configure_item( 2_3_0    , width =  w/3 -20     , height    =  h - 30     , pos = [ w*2/3 +15, 25 ]        ) # LOG 
 
 def render_visualizacaoGeral():
-    global MG_Angle 
-    global ME_Angle 
-
-    global AZI_Angle
-    global ALT_Angle
+    global day, minute, second, hour, month, year, total_seconds, dia_juliano, hora_manual
 
     # Definição da Latitude/Longitude 
-    sun_data.latitude  = str( get_value(2_3_10) ) # LATITUDE
-    sun_data.longitude = str( get_value(2_3_11) ) # LONGITUDE 
+    sun_data.latitude  = get_value(LATITUDE)      # LATITUDE
+    sun_data.longitude = get_value(LONGITUDE)     # LONGITUDE 
     sun_data.update_coordenates()
 
     # Horário automático 
-    if ( get_value( 2_3_5 ) == False ):           # HORA MANUAL 
+    if get_value( hora_manual ) == False :           # HORA MANUAL 
         sun_data.update_date()
-        set_value( 2_3_1, value = [ sun_data.year, sun_data.month, sun_data.day ] )      # DIA ATUTOMÁTICO 
-        set_value( 2_3_2, value = [ sun_data.hour, sun_data.minute, sun_data.second ] )  # HORA AUTOMÁTICA
-        set_value( 2_3_3, value = sun_data.total_seconds )                               # TOTAL DE SEGUNDOS 
+        set_value( 2_3_1, value = [ get_value(year), get_value(month), get_value(day) ]     )  # DIA ATUTOMÁTICO 
+        set_value( 2_3_2, value = [ get_value(hour), get_value(minute), get_value(second)]  )  # HORA AUTOMÁTICA
+
         # Total de segundos no dia convertido entre 0 e 1
-        total_seconds_converted = map_val(sun_data.total_seconds, 0, 24*3600, 0, 1)
-        set_value( 2_1_2, total_seconds_converted)                               # BARRA PROGRESSIVA 
-        set_value( 2_3_4, sun_data.dia_juliano%360)                                  # DIA JULIANO 
+        total_seconds_converted = map_val( get_value(total_seconds), 0, 24*3600, 0, 1)
+        set_value( 2_1_2, total_seconds_converted    )                               # BARRA PROGRESSIVA 
+        set_value( 2_3_3, get_value(total_seconds)   )                               # SEGUNDOS 
+        set_value( 2_3_4, get_value(dia_juliano) )                               # DIA JULIANO 
 
         disable_item(2_3_6) 
         disable_item(2_3_7) 
@@ -298,12 +258,12 @@ def render_visualizacaoGeral():
         enable_item( 2_3_7)
 
         # Pegando a data e hora passadas pelo usuário
-        year, month, day     = get_value( 2_3_6 )[:3]                                # DIA ARBITRÁRIO 
-        hour, minute, second = get_value( 2_3_7 )[:3]                                # HORA ARBITRÁRIA
+        yearm, monthm, daym     = get_value( 2_3_6 )[:3]                                # DIA ARBITRÁRIO 
+        hourm, minutem, secondm = get_value( 2_3_7 )[:3]                                # HORA ARBITRÁRIA
 
         # Montar a data setada pelo usuário
         try: 
-            data = dt.datetime( int(year), int(month), int(day), int(hour), int(minute), int(second) )
+            data = dt.datetime( int(yearm), int(monthm), int(daym), int(hourm), int(minutem), int(secondm) )
             sun_data.set_date( data )
         except:
             pass 
@@ -313,15 +273,12 @@ def render_visualizacaoGeral():
         # Total de segundos no dia convertidos entre 0 e 1
         total_seconds_converted = map_val(sun_data.total_seconds, 0, 24*3600, 0, 1)
         set_value( 2_1_2, total_seconds_converted)                              # BARRA PROGRESSIVA  
-        set_value( 2_3_9, sun_data.dia_juliano % 360)                                 # DIA JULIANO
+        set_value( 2_3_9, sun_data.dia_juliano   )                              # DIA JULIANO
 
     # Setar o Azimute, Altitude e Elevação
-    set_value( 2_3_12, math.degrees( sun_data.azi) ) #  AZIMUTE               
-    set_value( 2_3_13, math.degrees( sun_data.alt) ) #  ALTITUDE               
-    set_value( 2_3_14, sun_data.altitude           ) #  ELEVAÇÃO
-    
-    AZI_Angle = get_value( 2_3_12 ) 
-    ALT_Angle = get_value( 2_3_13 )
+    set_value( 2_3_12, math.degrees( sun_data.azi) )                            #  AZIMUTE               
+    set_value( 2_3_13, math.degrees( sun_data.alt) )                            #  ALTITUDE               
+    set_value( 2_3_14, sun_data.altitude           )                            #  ELEVAÇÃO
 
     att_draw_gir()
     att_draw_ele() 
