@@ -35,8 +35,6 @@ def resize_inicio    ( w : int,   h : int      ) -> bool :
     configure_item( 1_2_1, width = w//3 - 15, height = v_spacing ) 
     configure_item( 1_2_2, width = w//3 - 15, height = v_spacing ) 
     configure_item( 1_2_3, width = w//3 - 15, height = v_spacing ) 
-    #configure_item( 1_2_4, width = w//3 - 15, height = v_spacing ) 
-    #configure_item( 1_2_5, width = w//3 - 15, height = v_spacing ) 
     configure_item( 1_2_6, width = w//3 - 15, height = v_spacing ) 
     configure_item( 1_2_7, width = w//3 - 15, height = v_spacing ) 
     configure_item( 1_2_8, width = w//3 - 15, height = v_spacing )  
@@ -57,13 +55,10 @@ def init_inicio      ( windows :dict, callback ) :
 
     with window( label = 'Lateral', id = 1_2, no_move= True , no_close = True , no_title_bar= True, no_resize= True ) as Lateral_IN:
         windows['Inicio'].append( Lateral_IN )
-        
         add_spacing( count = 4 )
         add_button(  label = "Visualização geral" , id = 1_2_1, arrow  = False, callback = callback, user_data   = "Visualizacao geral"  )
         add_button(  label = "Posição do sol"     , id = 1_2_2, arrow  = False, callback = callback, user_data   = "Posicao do sol"      )
         add_button(  label = "Atuadores"          , id = 1_2_3, arrow  = False, callback = callback, user_data   = "Atuadores"           )
-        #add_button(  label = "Atuação da base"    , id = 1_2_4, arrow  = False, callback = callback, user_data   = "Atuacao da base"     )
-        #add_button(  label = "Atuação da elevação", id = 1_2_5, arrow  = False, callback = callback, user_data   = "Atuacao da elevacao" )
         add_button(  label = "Sensores"           , id = 1_2_6, arrow  = False, callback = callback, user_data   = "Sensores"            )
         add_button(  label = "RedNode Comunicaçaõ", id = 1_2_7, arrow  = False, callback = callback, user_data   = "Rednode comunicacao" )
         add_button(  label = "Configurações"      , id = 1_2_8, arrow  = False, callback = callback, user_data   = "Configuracoes"       )
@@ -75,8 +70,6 @@ def init_inicio      ( windows :dict, callback ) :
         add_hover_handler( parent = 1_2_1, callback = hover_buttons_IN, user_data = "Visualização geral"  )
         add_hover_handler( parent = 1_2_2, callback = hover_buttons_IN, user_data = "Posição do sol"      )
         add_hover_handler( parent = 1_2_3, callback = hover_buttons_IN, user_data = "Atuadores"           )
-        #add_hover_handler( parent = 1_2_4, callback = hover_buttons_IN, user_data = "Atuação da base"     )
-        #add_hover_handler( parent = 1_2_5, callback = hover_buttons_IN, user_data = "Atuação da elevação" )
         add_hover_handler( parent = 1_2_6, callback = hover_buttons_IN, user_data = "Sensores"            )
         add_hover_handler( parent = 1_2_7, callback = hover_buttons_IN, user_data = "RedNode Comunicação" )
         add_hover_handler( parent = 1_2_8, callback = hover_buttons_IN, user_data = "Configurações"       )

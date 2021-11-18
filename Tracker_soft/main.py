@@ -48,6 +48,8 @@ def configure_viewport():
     set_viewport_min_width ( width  = 1000                            ) 
     set_viewport_title     ( title  = 'JetTracker - Controle do sol'  )
 
+    change_font() 
+    
     maximize_viewport() 
 
     set_primary_window    ( main_window, True    )

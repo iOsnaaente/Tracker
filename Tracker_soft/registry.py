@@ -1,9 +1,55 @@
 import dearpygui.dearpygui  as dpg 
+import os 
 
 from utils.Model            import SunPosition
 from serial                 import Serial
 
-import os 
+COMP        = Serial() 
+DOM         = [ 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro' ]
+PATH        = os.path.dirname( __file__ )
+PATH_IMG    = PATH + '\\utils\\img\\'
+
+color = {
+    "black"     : lambda alfa : [    0,    0,    0, alfa ],
+    "red"       : lambda alfa : [  255,    0,    0, alfa ],
+    "yellow"    : lambda alfa : [  255,  255,    0, alfa ],
+    "green"     : lambda alfa : [    0,  255,    0, alfa ],
+    "ciano"     : lambda alfa : [    0,  255,  255, alfa ],
+    "blue"      : lambda alfa : [    0,    0,  255, alfa ],
+    "magenta"   : lambda alfa : [  255,    0,  255, alfa ],
+    "white"     : lambda alfa : [  255,  255,  255, alfa ],
+    'gray'      : lambda alfa : [  155,  155,  155, alfa ],
+    'orange'    : lambda alfa : [  255,   69,    0, alfa ],
+
+    'on_color'  : lambda alfa : [ 0x3c, 0xb3, 0x71, alfa ],
+    'on_hover'  : lambda alfa : [ 0x92, 0xe0, 0x92, alfa ],
+    'on_click'  : lambda alfa : [ 0x20, 0xb2, 0xaa, alfa ],
+    'off_color' : lambda alfa : [ 0xff, 0x45, 0x00, alfa ],
+    'off_hover' : lambda alfa : [ 0xf0, 0x80, 0x80, alfa ],
+    'off_click' : lambda alfa : [ 0x8b, 0x45, 0x13, alfa ],
+    }
+
+windows = {
+            "Inicio"             : [  ],
+            "Visualizacao geral" : [  ],
+            "Posicao do sol"     : [  ],
+            "Atuadores"          : [  ],
+            "Atuacao da base"    : [  ],
+            "Atuacao da elevacao": [  ],
+            "Sensores"           : [  ],
+            "Rednode comunicacao": [  ],
+            "Configuracoes"      : [  ],
+            'Sair'               : [  ],
+            }
+
+def add_image_loaded( img_path ):
+    w, h, c, d = dpg.load_image( img_path )
+    with dpg.texture_registry() as reg_id : 
+        return dpg.add_static_texture( w, h, d, parent = reg_id )
+
+def change_font():
+    with dpg.font_registry( id = 'fonts' ):
+            dpg.add_font( PATH + '\\fonts\\verdana.ttf', 14, default_font=True, parent='fonts')
 
 with dpg.value_registry( id = 99_99_0 ) as registries:
     LATITUDE     = dpg.add_string_value( parent = registries, default_value = '-29.16530765942215', id = 99_99_1 ) 
@@ -62,46 +108,3 @@ with dpg.value_registry( id = 99_99_0 ) as registries:
      
 sun_data     = SunPosition( dpg.get_value(LATITUDE), dpg.get_value(LONGITUDE), dpg.get_value(ALTITUDE) )
 sun_data.update() 
-
-COMP        = Serial() 
-DOM         = [ 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro' ]
-PATH        = os.path.dirname( __file__ )
-PATH_IMG    = PATH + '\\utils\\img\\'
-
-color = {
-    "black"     : lambda alfa : [    0,    0,    0, alfa ],
-    "red"       : lambda alfa : [  255,    0,    0, alfa ],
-    "yellow"    : lambda alfa : [  255,  255,    0, alfa ],
-    "green"     : lambda alfa : [    0,  255,    0, alfa ],
-    "ciano"     : lambda alfa : [    0,  255,  255, alfa ],
-    "blue"      : lambda alfa : [    0,    0,  255, alfa ],
-    "magenta"   : lambda alfa : [  255,    0,  255, alfa ],
-    "white"     : lambda alfa : [  255,  255,  255, alfa ],
-    'gray'      : lambda alfa : [  155,  155,  155, alfa ],
-    'orange'    : lambda alfa : [  255,   69,    0, alfa ],
-
-    'on_color'  : lambda alfa : [ 0x3c, 0xb3, 0x71, alfa ],
-    'on_hover'  : lambda alfa : [ 0x92, 0xe0, 0x92, alfa ],
-    'on_click'  : lambda alfa : [ 0x20, 0xb2, 0xaa, alfa ],
-    'off_color' : lambda alfa : [ 0xff, 0x45, 0x00, alfa ],
-    'off_hover' : lambda alfa : [ 0xf0, 0x80, 0x80, alfa ],
-    'off_click' : lambda alfa : [ 0x8b, 0x45, 0x13, alfa ],
-    }
-
-windows = {
-            "Inicio"             : [  ],
-            "Visualizacao geral" : [  ],
-            "Posicao do sol"     : [  ],
-            "Atuadores"          : [  ],
-            "Atuacao da base"    : [  ],
-            "Atuacao da elevacao": [  ],
-            "Sensores"           : [  ],
-            "Rednode comunicacao": [  ],
-            "Configuracoes"      : [  ],
-            'Sair'               : [  ],
-            }
-
-def add_image_loaded( img_path ):
-    w, h, c, d = dpg.load_image( img_path )
-    with dpg.texture_registry() as reg_id : 
-        return dpg.add_static_texture( w, h, d, parent = reg_id )
