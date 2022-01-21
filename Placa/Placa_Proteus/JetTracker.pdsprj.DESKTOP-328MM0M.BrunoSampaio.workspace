@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8' standalone='yes'?>
 <WORKSPACE>
  <FRAME activewindow="0">
-  <PLACEMENT>2c0000000200000003000000b282ffff0083ffffffffffffffffffff650000000d000000cd0600002b040000</PLACEMENT>
+  <PLACEMENT>2c0000000200000003000000b0ffffffffffffffffffffffffffffff0f0000000d000000970300002c040000</PLACEMENT>
   <WINDOW type="default" module="ISIS"/>
   <WINDOW type="default" module="ARES"/>
   <WINDOW type="VIEW3D" module="VIEW3D">
