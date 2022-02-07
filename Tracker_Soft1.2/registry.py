@@ -4,10 +4,7 @@ import math
 import os 
 
 from utils.Model     import SunPosition
-from utils.UART_comm import UART_COM 
 
-# SERIAL 
-COMP = UART_COM( "" )
 
 # GRAPHS 
 MPE_LIST  = []
@@ -24,8 +21,21 @@ GPHG_ATT  = False
 
 DOMINIO  = [] 
 
+MS_GIRO  = [] 
+PS_GIRO  = [] 
+TM_GIRO  = [] 
+CNT_GIRO = 0
+
+MS_ELE   = [] 
+PS_ELE   = [] 
+TM_ELE   = []
+CNT_ELE  = 0
+
+
 MSG_INIT    = [ ord(i) for i in 'init' ]
 MSG_COUNT   = 0 
+
+DIAGNOSIS_LIST = [] 
 
 DOM         = [ 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro' ]
 
@@ -68,7 +78,6 @@ windows = {
             'Sair'               : [  ],
             }
 
-
 with dpg.value_registry( ) as registries:
     # POSIÇÃO GEOGRÁFICA CONSTANTE - PEGAR DE UM DOCUMENTO
     LATITUDE     = dpg.add_float_value ( parent = registries, default_value = -29.16530765942215      , tag = 99_99_1 ) 
@@ -80,16 +89,16 @@ with dpg.value_registry( ) as registries:
     #   GIRO 
     MPG              = dpg.add_float_value ( parent = registries, default_value = 425                 , tag = 99_99_5 )
     MG_VELANG        = dpg.add_float_value ( parent = registries, default_value = 1.0                 , tag = 99_99_6 )  
-    MG_RESOLUCAO     = dpg.add_float_value ( parent = registries, default_value = 0.0                 , tag = 99_99_7 )
-    MG_STEPS         = dpg.add_float_value ( parent = registries, default_value = 0.0                 , tag = 99_99_8 )
-    MG_USTEP         = dpg.add_string_value( parent = registries, default_value = '1/16'              , tag = 99_99_9 )
+    MG_STEPS         = dpg.add_float_value ( parent = registries, default_value = 1.8                 , tag = 99_99_8 )
+    MG_USTEP         = dpg.add_string_value( parent = registries, default_value = '1/8'               , tag = 99_99_9 )
+    MG_RESOLUCAO     = dpg.add_float_value ( parent = registries, default_value = 0.225               , tag = 99_99_7 )
     MG_ONOFF         = dpg.add_bool_value  ( parent = registries, default_value = False               , tag = 99_99_10 ) 
     #   ELEVAÇÃO
     MPE              = dpg.add_float_value ( parent = registries, default_value = 100                 , tag = 99_99_11 )
     ME_VELANG        = dpg.add_float_value ( parent = registries, default_value = 1.0                 , tag = 99_99_12 )  
-    ME_RESOLUCAO     = dpg.add_float_value ( parent = registries, default_value = 0.0                 , tag = 99_99_13 )
-    ME_STEPS         = dpg.add_float_value ( parent = registries, default_value = 0.0                 , tag = 99_99_14 )
-    ME_USTEP         = dpg.add_string_value( parent = registries, default_value = '1/16'              , tag = 99_99_15 ) 
+    ME_STEPS         = dpg.add_float_value ( parent = registries, default_value = 1.8                 , tag = 99_99_14 )
+    ME_USTEP         = dpg.add_string_value( parent = registries, default_value = '1/8'               , tag = 99_99_15 ) 
+    ME_RESOLUCAO     = dpg.add_float_value ( parent = registries, default_value = 0.225                , tag = 99_99_13 )
     ME_ONOFF         = dpg.add_bool_value  ( parent = registries, default_value = False               , tag = 99_99_16 ) 
 
     # DADOS DOS SENSORES 
@@ -133,11 +142,21 @@ with dpg.value_registry( ) as registries:
     HORA_MANUAL      = dpg.add_bool_value  ( parent = registries, default_value = False               , tag = 99_99_99_41 )  
     
     # ATUADOR 
-    CMD_MODE         = dpg.add_string_value( parent = registries, default_value = 'HEX'               , tag = 99_99_99_42 )
+    WRONG_DATETIME   = dpg.add_bool_value  ( parent = registries, default_value = False               , tag = 99_99_99_42 ) 
+    CMD_MODE         = dpg.add_string_value( parent = registries, default_value = 'ASCII'             , tag = 99_99_99_43 )
+    STATE            = dpg.add_string_value( parent = registries, default_value = 'AUTO'              , tag = 99_99_99_44 )
+
+    #MS_GIRO          = dpg.add_float_vect_value( parent = registries, default_value = [], tag = 99_99_99_43 )
+    #PS_GIRO          = dpg.add_float_vect_value( parent = registries, default_value = [], tag = 99_99_99_44 )
+    #TM_GIRO          = dpg.add_float_vect_value( parent = registries, default_value = [], tag = 99_99_99_45 )
+    #MS_ELE           = dpg.add_float_vect_value( parent = registries, default_value = [], tag = 99_99_99_46 )
+    #PS_ELE           = dpg.add_float_vect_value( parent = registries, default_value = [], tag = 99_99_99_47 )
+    #TM_ELE           = dpg.add_float_vect_value( parent = registries, default_value = [], tag = 99_99_99_48 )
 
 
 SUN_DATA = SunPosition( dpg.get_value(LATITUDE), dpg.get_value(LONGITUDE), dpg.get_value(ALTITUDE) )
 SUN_DATA.update() 
+
 dpg.set_value( SPE, math.degrees(SUN_DATA.alt) ) 
 dpg.set_value( SPG, math.degrees(SUN_DATA.azi) ) 
 
