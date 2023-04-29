@@ -1,6 +1,10 @@
 # INICIO DO CONTEXTO DPG 
 import dearpygui.dearpygui as dpg
 
+import os 
+PATH        = os.path.dirname( __file__ )
+PATH_IMG    = PATH + '\\utils\\img\\'
+
 # INICIO DO CONTEXTO 
 dpg.create_context()
 dpg.create_viewport( title = 'Jet Towers Tracker', min_width = 800, min_height = 600 )
@@ -9,7 +13,7 @@ dpg.setup_dearpygui()
 
 # CONFIGURAÇÃO DA FONTE - INICIO DO COD. 
 with dpg.font_registry():
-    defont = dpg.add_font("utils\\fonts\\verdana.ttf", 14 )
+    defont = dpg.add_font( PATH + "\\utils\\fonts\\verdana.ttf", 14 )
 dpg.bind_font( defont )
 
 
@@ -34,7 +38,6 @@ import math
 import time 
 import glob
 import sys 
-import os 
 
 
 
@@ -313,9 +316,6 @@ MSG_COUNT   = 0
 DIAGNOSIS_LIST = [] 
 
 DOM         = [ 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro' ]
-
-PATH        = os.path.dirname( __file__ )
-PATH_IMG    = PATH + '\\utils\\img\\'
 
 COLOR = {
     "black"     : lambda alfa : [    0,    0,    0, alfa ],

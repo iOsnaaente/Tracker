@@ -112,7 +112,7 @@ dpg.maximize_viewport           (                             )
 
 # SETA A JANELA INICIAL 
 change_menu  ( None, None, 'Inicio' )
-dpg.set_frame_callback( 3 , callback = change_menu, user_data = 'Atuadores' )
+# dpg.set_frame_callback( 3 , callback = change_menu, user_data = 'Atuadores' )
 
 
 # START OF DPG VIEW 

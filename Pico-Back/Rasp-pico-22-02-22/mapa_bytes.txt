@@ -1,0 +1,56 @@
+# MAPA DE BYTES 
+
+# DIAGNOSTICO:: 
+    ------------------------------------------------------------------
+      ROW |      B0|     B1|    B2|    B3|    B4|    B5|    B6|   B7 |
+    ------------------------------------------------------------------
+    ROW 1 |     Y  |    M  |   D  |    H |  Min |    S |   OK |  MG0 | 
+    ROW 2 |    MG1 |   MG2 |  MG3 |   D0 |   D1 |   D2 |   D3 |   I0 | 
+    ROW 3 |     I1 |    I2 |   I3 |   P0 |   P1 |   P2 |   P3 |  ME0 |
+    ROW 4 |    ME1 |   ME2 |  ME3 |   D0 |   D1 |   D2 |   D3 |   I0 |
+    ROW 5 |     I1 |    I2 |   I3 |   P0 |   P1 |   P2 |   P3 |   OK | 
+    ROW 6 |   PVG0 |  PVG1 | PVG2 | PVG3 | PVE0 | PVE1 | PVE2 | PVE3 | 
+    ROW 7 |    SG0 |   SG1 |  SG2 |  SG3 |  SE0 |  SE1 |  SE2 |  SE3 | 
+    ROW 8 |    AZ0 |   AZ1 |  AZ2 |  AZ3 |  AT0 |  AT1 |  AT2 |  AT3 |
+    ROW 9 | ON_OFF | State |  ACK |      |      |      |      |      |
+    ------------------------------------------------------------------
+    
+    >> DATA ( 6 bytes + 1 byte ): 
+        | Y | M | D | H | Min | S |
+        | OK |
+
+    >> MOTORS 
+        >> GIRO ( 16 Bytes )
+            | MG0 | MG1 | MG2 | MG3 |
+            | D0 | D1 | D2 | D3 | I0 | I1 | I2 | I3 | P0 | P1 | P2 | P3 |
+
+        >> ELEVAÇÃO ( 16 Bytes )
+            | ME0 | ME1 | ME2 | ME3 | 
+            | D0 | D1 | D2 | D3 | I0 | I1 | I2 | I3 | P0 | P1 | P2 | P3 |
+
+    
+    >> SENSOR ( 1 bytes ): 
+        | OK | 
+        
+    >> PV SENSOR ( 8 Bytes ): 
+        | PVG0 | PVG1 | PVG2 | PVG3 |
+        | PVE0 | PVE1 | PVE2 | PVE3 | 
+    
+    >> SENSOR ( 8 bytes ): 
+        | SG0 | SG1 | SG2 | SG3 |
+        | SE0 | SE1 | SE2 | SE3 | 
+    
+    >> AZIMUTE E ALTITUDE ( 8 Bytes ) 
+        | AZ0 | AZ1 | AZ2 | AZ3 | 
+        | AT0 | AT1 | AT2 | AT3 |
+
+    >> MOTORS STATE ( 1 Byte )
+        | ON_OFF |
+
+    >> STATE OF OPERATION ( 1 Byte )
+        | State |  
+
+    >>> ACK ( 1 Byte ) 
+        | ACK |
+
+

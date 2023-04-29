@@ -1,18 +1,11 @@
-# Tracker
-Criação de um supervisório para controle de movimentação de um gerador solar do tipo rastreador do sol - Tracker
-
-Desenvolvimento dentro do periodo de estágio não obrigatório na empresa Jet Towers, localizada na cidade de Santiago RS - Brasil. 
-
-# Requerimentos
-pip install -r requirements.txt
-
-# Dear PyGui 
-Software supervisório criado sobre a GUI DearPygui - https://github.com/hoffstadt/DearPyGui
-
-
-# Log 
-
-Protótipo de criação de um rastreador solar - Tracker
+__author__     = "Bruno Gabriel F. Sampaio"
+__version__    = "0.9.9"
+__company__    = "Jet Towers - Telecomunicações // http://www.jettowers.com.br/"
+__maintainer__ = "Bruno Gabriel F. Sampaio"
+__email__      = "bruno.sampaio@acad.ufsm.br"
+__status__     = "Prototype"
+ 
+""" Protótipo de criação de um rastreador solar - Tracker
     
     Firmware utilizado em um Raspberry pi Pico para controle
     de motores de passo que realizam o rastreamento solar
@@ -26,6 +19,7 @@ Protótipo de criação de um rastreador solar - Tracker
     
     Versão 1.1.0::
         >>> Estabilidade de testes com o uso do RenameMainDotPy firmware no Pico    
+    
     
     Versão 1.0.1::
         >>> Várias correções de bugs
@@ -187,3 +181,4 @@ Protótipo de criação de um rastreador solar - Tracker
         >>> Migração do código em C ( Arduino ) para Python ( MicroPython)
      
 """
+
