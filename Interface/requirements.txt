@@ -1,0 +1,6 @@
+dearpygui==1.9.1
+ephem==4.1.4
+numpy==1.25.0
+pymodbus==3.3.2
+pyserial==3.5
+python==3.11
